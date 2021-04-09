@@ -23,14 +23,16 @@ class Client:
 
     def send_uuid(self):
         con, adr = self.connect_to_server()
-        con.send(bytes(self.uuid))
+        con.sendall(bytes(self.uuid))
         data = con.recv()
         
-    def send_data(self):
+    def send_data(self, file_name: str):
+        with open(file_name, 'r') as file:
+            
         pass
 
     def recv_data(self):
-
+        pass
 
     def get_user(self, con):
         pass

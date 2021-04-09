@@ -2,6 +2,7 @@ import socket
 
 HOST = '192.168.0.129'
 PORT = 1234
+BUFFER_SIZE = 4096
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
@@ -9,8 +10,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     conn, addr = s.accept()
     with conn:
         print('Connected by', addr)
-        while True:
-            data = conn.recv(1024)
-            if not data:
-                break
-            conn.send(data)
+        with open('robin_sus.PNG', 'wb') as file:
+            while True:
+                data = conn.recv(BUFFER_SIZE)
+                file.write(data)
+                if not data: # done
+                    break
+                conn.send(b'data recieved')
