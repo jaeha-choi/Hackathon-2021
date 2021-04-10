@@ -1,3 +1,4 @@
+import logging as log
 import os
 import socket
 import struct
@@ -33,8 +34,10 @@ def validate(ip_addr: str, port: int):
     try:
         socket.inet_aton(ip_addr)
     except socket.error:
+        log.info("IP address not valid")
         return 1
     if not (1 <= port <= 65535):
+        log.info("Port not valid")
         return 2
     return 0
 
@@ -54,7 +57,7 @@ def _recv_n_byte(conn: socket.socket, packet_size: int):
                 return None
             data += packet
     except Exception as err:
-        print("Unknown error in _recv_n_byte", err)
+        log.error("Unknown error in _recv_n_byte", err)
         return None
     return data
 
@@ -78,10 +81,10 @@ def send_str(conn: socket.socket, msg: Any, encoding: str = "utf-8") -> bool:
         #     sent_bytes = conn.send(b_msg)
         #     b_msg = b_msg[sent_bytes:]
     except UnicodeError as err:
-        print("Encoding error:", err)
+        log.error("Encoding error:", err)
         return False
     except Exception as err:
-        print("Unknown error in send_str", err)
+        log.error("Unknown error in send_str", err)
         return False
 
     return True
@@ -108,10 +111,10 @@ def recv_str(conn: socket.socket, encoding: str = "utf-8") -> (str, bool):
         data = _recv_n_byte(conn, packet_size)
         string = data.decode(encoding)
     except UnicodeError as err:
-        print("Decoding error:", err)
+        log.error("Decoding error:", err)
         return string, False
     except Exception as err:
-        print("Unknown error in recv_str", err)
+        log.error("Unknown error in recv_str", err)
         return string, False
 
     return string, True
@@ -138,13 +141,13 @@ def send_bin(conn: socket.socket, file_n: str, buff_size: int = 4096) -> bool:
                 conn.send(bytes_read)
 
     except ValueError as err:
-        print("Encoding error:", err)
+        log.error("Encoding error:", err)
         return False
     except OSError as err:
-        print("File error:", err)
+        log.error("File error:", err)
         return False
     except Exception as err:
-        print("Unknown error in send_bin", err)
+        log.error("Unknown error in send_bin", err)
         return False
 
     return True
@@ -165,13 +168,13 @@ def recv_bin(conn: socket.socket, file_n: str) -> bool:
             data = _recv_n_byte(conn, packet_size)
             file.write(data)
     except ValueError as err:
-        print("Encoding error:", err)
+        log.error("Encoding error:", err)
         return False
     except OSError as err:
-        print("File error:", err)
+        log.error("File error:", err)
         return False
     except Exception as err:
-        print("Unknown error in recv_bin", err)
+        log.error("Unknown error in recv_bin", err)
         return False
 
     return True
