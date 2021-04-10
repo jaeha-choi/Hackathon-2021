@@ -8,11 +8,15 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
     s.listen()
     conn, addr = s.accept()
-    with conn:
-        by = b''
-        while True:
-            data = conn.recv(BUFFER_SIZE)
-            if not data:
-                break
-            by += data
-            print(by)
+    try:
+        with conn:
+            by = b''
+            while True:
+                data = conn.recv(BUFFER_SIZE)
+                if not data:
+                    break
+                by += data
+                print(by)
+    except KeyboardInterrupt:
+        conn.close()
+        print("Keyboard Interrupt")
