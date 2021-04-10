@@ -22,28 +22,29 @@ class Server:
 
     def listen(self):
         conn, addr = self.socket.accept()
-        while True:
-            try:
-                # data, _ = util.recv_all_str(conn)
-                # string_return = "address:\t" + str(addr) + "\ndata:\t" + data
-                # print("Public address:\t", addr)
-                # print("Private address:\t", data)
-                # util.send_all_str(conn, string_return)
-                # print("Sent to client")
-                file_n, _ = util.recv_str(conn)
-                print(file_n)
-                if util.recv_bin(conn, file_n):
-                    print("File successfully saved")
-                    util.send_str(conn, "File successfully saved")
-                else:
-                    print("File not saved")
-                    util.send_str(conn, "File not saved")
-                print()
-                # conn.close()
-                # self.socket.close()
-            except Exception as err:
-                print(err)
-                # self.socket.close()
+
+        try:
+            # data, _ = util.recv_all_str(conn)
+            # string_return = "address:\t" + str(addr) + "\ndata:\t" + data
+            # print("Public address:\t", addr)
+            # print("Private address:\t", data)
+            # util.send_all_str(conn, string_return)
+            # print("Sent to client")
+            file_n, _ = util.recv_str(conn)
+            print(file_n)
+            if util.recv_bin(conn, file_n):
+                print("File successfully saved")
+                util.send_str(conn, "File successfully saved")
+            else:
+                print("File not saved")
+                util.send_str(conn, "File not saved")
+            print()
+            # conn.close()
+            # self.socket.close()
+        except Exception as err:
+            print(err)
+        conn.close()
+        # self.socket.close()
 
 
 if __name__ == '__main__':
