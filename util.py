@@ -71,7 +71,7 @@ def send_str(conn: socket.socket, msg: Any, encoding: str = "utf-8") -> bool:
         # This is inefficient as the size can get big very fast
         # b_msg = b'%i]' % len(b_msg) + msg.encode(encoding=encoding)
         # Sends size of the file in first four bytes
-        b_msg = struct.pack('!L', len(str(msg))) + msg.encode(encoding=encoding)
+        b_msg = struct.pack('!L', len(str(msg))) + str(msg).encode(encoding=encoding)
         # print("send_str:\tPacket size:", len(msg))  # Debug
         conn.sendall(b_msg)
         # while b_msg:
