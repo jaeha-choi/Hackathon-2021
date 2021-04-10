@@ -113,6 +113,7 @@ def send_bin(conn: socket.socket, file_n: str, buff_size: int = 4096) -> bool:
         return False
     except OSError as err:
         print("File error:", err)
+        return False
     except:
         print("Unknown error in send_bin")
         return False
@@ -139,6 +140,7 @@ def recv_bin(conn: socket.socket, file_n: str) -> bool:
         return False
     except OSError as err:
         print("File error:", err)
+        return False
     except:
         print("Unknown error in recv_bin")
         return False
