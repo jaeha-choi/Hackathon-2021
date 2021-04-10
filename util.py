@@ -53,8 +53,8 @@ def _recv_n_byte(conn: socket.socket, packet_size: int):
             if not packet:
                 return None
             data += packet
-    except:
-        print("Unknown error in _recv_n_byte")
+    except Exception as err:
+        print("Unknown error in _recv_n_byte", err)
         return None
     return data
 
@@ -80,8 +80,8 @@ def send_str(conn: socket.socket, msg: Any, encoding: str = "utf-8") -> bool:
     except UnicodeError as err:
         print("Encoding error:", err)
         return False
-    except:
-        print("Unknown error in send_str")
+    except Exception as err:
+        print("Unknown error in send_str", err)
         return False
 
     return True
@@ -89,13 +89,14 @@ def send_str(conn: socket.socket, msg: Any, encoding: str = "utf-8") -> bool:
 
 def recv_str(conn: socket.socket, encoding: str = "utf-8") -> (str, bool):
     """
-    Receive text as string format
+    Receive text as string format. If packet is not being sent, raises exception.
     :param conn: Connection socket
     :param encoding: Encoding to use for string
     :return: Tuple of received string and Boolean indicating the receive status.
     """
     string = ""
     try:
+        # Check first four bytes for total packet size
         pkg_len = _recv_n_byte(conn, 4)
         # This is inefficient as the size can get big very fast
         # end_idx = data.find(b']')
@@ -109,8 +110,8 @@ def recv_str(conn: socket.socket, encoding: str = "utf-8") -> (str, bool):
     except UnicodeError as err:
         print("Decoding error:", err)
         return string, False
-    except:
-        print("Unknown error in recv_str")
+    except Exception as err:
+        print("Unknown error in recv_str", err)
         return string, False
 
     return string, True
@@ -142,8 +143,8 @@ def send_bin(conn: socket.socket, file_n: str, buff_size: int = 4096) -> bool:
     except OSError as err:
         print("File error:", err)
         return False
-    except:
-        print("Unknown error in send_bin")
+    except Exception as err:
+        print("Unknown error in send_bin", err)
         return False
 
     return True
@@ -169,8 +170,8 @@ def recv_bin(conn: socket.socket, file_n: str) -> bool:
     except OSError as err:
         print("File error:", err)
         return False
-    except:
-        print("Unknown error in recv_bin")
+    except Exception as err:
+        print("Unknown error in recv_bin", err)
         return False
 
     return True
