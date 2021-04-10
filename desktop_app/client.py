@@ -1,15 +1,9 @@
 import socket
 import uuid
-from typing import Any, Callable
 
 from utility import util
 from utility.util import Command
 from utility.util import ExitCode
-
-
-def exec_res(function: Callable, *args: tuple[Any, ...]) -> None:
-    res = function(args[0][0], args[0][1]) if len(args) else function()
-    print("Function \033[96m%s\033[0m returned code: %s" % (str(function.__name__), res.name))
 
 
 class Client:
@@ -76,9 +70,9 @@ class Client:
 
 if __name__ == '__main__':
     client = Client('143.198.234.58', 1234)
-    exec_res(client.connect)
-    exec_res(client.send_uuid)
-    exec_res(client.send_file, ("./test/cat.png", "dog.png"))
-    exec_res(client.send_file, ("./test/cat2.JPG", "stars.JPG"))
-    exec_res(client.send_heartbeat)
+    util.exec_res(client.connect)
+    util.exec_res(client.send_uuid)
+    util.exec_res(client.send_file, ("./test/cat.png", "dog.png"))
+    util.exec_res(client.send_file, ("./test/cat2.JPG", "stars.JPG"))
+    util.exec_res(client.send_heartbeat)
     client.close()
