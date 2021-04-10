@@ -13,12 +13,13 @@ def validate(ip_addr: str, port: int):
 
 
 # Return True if msg was sent, False if encountered an error.
-def send_all_str(conn: socket.socket, msg: str, encoding: str = "utf-8") -> bool:
+def send_str(conn: socket.socket, msg: str, encoding: str = "utf-8") -> bool:
     try:
         b_msg = msg.encode(encoding=encoding)
+        b_msg = b'%i]' % (len(b_msg) + 1) + b_msg
         while b_msg:
-            send_bytes = conn.send(b_msg)
-            b_msg = b_msg[send_bytes:]
+            sent_bytes = conn.send(b_msg)
+            b_msg = b_msg[sent_bytes:]
     except UnicodeError as err:
         print("Encoding error:", err)
         return False
@@ -29,10 +30,15 @@ def send_all_str(conn: socket.socket, msg: str, encoding: str = "utf-8") -> bool
     return True
 
 
-def recv_all_str(conn: socket.socket, encoding: str = "utf-8", buff_size: int = 4096) -> (str, bool):
+def recv_str(conn: socket.socket, encoding: str = "utf-8", buff_size: int = 4096) -> (str, bool):
     string = ""
     try:
         data = conn.recv(buff_size)
+        end_idx = data.find(b']')
+        while end_idx == -1:
+            data += conn.recv(buff_size)
+            end_idx = data.find(b']')
+        data[end_idx]
         while data:
             string += data.decode(encoding)
             data = conn.recv(buff_size)
