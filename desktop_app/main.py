@@ -48,7 +48,7 @@ class MyWindow(QMainWindow):
 
         # Delete File
         self.deleteFileButton = QPushButton(self)
-        self.deleteFileButton.setText("Murder File(s)")
+        self.deleteFileButton.setText("Delete File(s)")
         self.deleteFileButton.clicked.connect(self.removeSel)
 
         # List of Files
@@ -153,11 +153,13 @@ class MyWindow(QMainWindow):
         if (self._darkLight_flag == True):
             self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
             self.darkLightButton.setText("Dark")
+            self.deleteFileButton.setText("Murder File(s)")
             self._darkLight_flag = False
 
         elif (self._darkLight_flag == False):
             self.setStyleSheet('Fusion')
             self.darkLightButton.setText("Light")
+            self.deleteFileButton.setText("Delete File(s)")
             self._darkLight_flag = True
 
 
