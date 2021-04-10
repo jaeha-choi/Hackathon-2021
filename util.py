@@ -109,9 +109,9 @@ def send_bin(conn: socket.socket, file_n: str, buff_size: int = 4096) -> bool:
             b_msg = struct.pack('!L', os.path.getsize(file_n))
             print("send_bin:\tPacket size:", os.path.getsize(file_n))  # Debug
             conn.send(b_msg)
-            while file:
-                bytes_read = file.read(buff_size)
-                conn.send(bytes_read)
+            # while file:
+            bytes_read = file.read(buff_size)
+            conn.sendall(bytes_read)
     except ValueError as err:
         print("Encoding error:", err)
         return False
