@@ -25,4 +25,22 @@ def send_all_str(conn: socket, msg: str, encoding: str = "utf-8") -> bool:
     except:
         print("Unknown error in send_all_str")
         return False
+
     return True
+
+
+def recv_all_str(conn: socket, encoding: str = "utf-8", buff_size: int = 4096) -> (str, bool):
+    string = ""
+    try:
+        data = conn.recv(buff_size)
+        while data:
+            string += data.decode(encoding)
+            data = conn.recv(buff_size)
+    except UnicodeError as err:
+        print("Decoding error:", err)
+        return string, False
+    except:
+        print("Unknown error in recv_all_str")
+        return string, False
+
+    return string, True
