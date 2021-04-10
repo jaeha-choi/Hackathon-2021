@@ -2,6 +2,8 @@ import socket
 import uuid
 
 import util
+from util import Command
+from util import ExitCode
 
 
 class Server:
@@ -14,40 +16,59 @@ class Server:
         self.socket.bind((self.ip, self.port))
         self.socket.listen()
 
-    def add(self, uid: uuid.UUID, ip_addr: str, port: int):
-        self.clients[uid] = (ip_addr, port)
+    def add(self, uid: uuid.UUID, pub_ip: str, priv_ip: str, port: int):
+        self.clients[uid] = (pub_ip, port, priv_ip)
 
     def load_clients(self):
         pass
 
     def listen(self):
         conn, addr = self.socket.accept()
+        while True:
+            try:
+                command, _ = util.recv_str(conn)
+                if command == str(Command.ADD):
+                    # Receive add user command
+                    # Receive uuid
+                    uid, _ = util.recv_str(conn)
+                    # Receive private address and port
+                    priv_addr, _ = util.recv_str(conn)
+                    self.add(uid, addr[0], addr[1], priv_addr[0])
+                    util.send_str(conn, ExitCode.SUCCESS)
+                    print("ADD command done")  # Debug
 
-        try:
-            # data, _ = util.recv_all_str(conn)
-            # string_return = "address:\t" + str(addr) + "\ndata:\t" + data
-            # print("Public address:\t", addr)
-            # print("Private address:\t", data)
-            # util.send_all_str(conn, string_return)
-            # print("Sent to client")
-            file_n, _ = util.recv_str(conn)
-            print(file_n)
-            if util.recv_bin(conn, file_n):
-                print("File successfully saved")
-                util.send_str(conn, "File successfully saved")
-            else:
-                print("File not saved")
-                util.send_str(conn, "File not saved")
-            print()
-            # conn.close()
-            # self.socket.close()
-        except Exception as err:
-            print(err)
-        conn.close()
-        # self.socket.close()
+                elif command == str(Command.EXIT):
+                    # Receive exit command
+                    # Receive close connection packet
+                    util.send_str(conn, "Closing connection.")
+                    conn.close()
+                    print("EXIT command done")  # Debug
+                    break
+
+                elif command == str(Command.HEARTBEAT):
+                    # Receive heartbeat command
+                    # Receive keep-alive packet
+                    # hrs, _ = util.recv_str(conn)
+                    util.send_str(conn, ExitCode.SUCCESS)
+                    print("KEEP-ALIVE command done")  # Debug
+
+                elif command == str(Command.TRANSFER):
+                    # Receive transfer command
+                    # Receive file name used for saving
+                    file_n, _ = util.recv_str(conn)
+                    # If file is received
+                    if util.recv_bin(conn, file_n):
+                        # print("File successfully saved")
+                        util.send_str(conn, ExitCode.SUCCESS)
+                    else:
+                        # print("File not saved")
+                        util.send_str(conn, ExitCode.FAIL_GENERAL)
+                    print("TRANSFER command done")  # Debug
+
+            except Exception as err:
+                print("Unknown Error at listen", err)
 
 
 if __name__ == '__main__':
-    # print("Nothing here yet")
     serv = Server()
     serv.listen()
