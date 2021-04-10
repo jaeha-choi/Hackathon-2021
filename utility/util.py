@@ -14,6 +14,7 @@ class Command(Enum):
     EXIT = "EXT"
     HEARTBEAT = "HRB"
     TRANSFER = "TRF"
+    RELAY = "REL"
 
 
 class ExitCode(Enum):
@@ -58,7 +59,7 @@ def _recv_n_byte(conn: socket.socket, packet_size: int):
             data += packet
     except Exception as err:
         log.error("Unknown error in _recv_n_byte", err)
-        return None
+        return False
     return data
 
 
@@ -101,6 +102,8 @@ def recv_str(conn: socket.socket, encoding: str = "utf-8") -> (str, bool):
     try:
         # Check first four bytes for total packet size
         pkg_len = _recv_n_byte(conn, 4)
+        if pkg_len is None:
+            return string, False
         # This is inefficient as the size can get big very fast
         # end_idx = data.find(b']')
         # pkg_len = int(data[:pkg_len])
