@@ -4,6 +4,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/material.dart';
+import 'dart:developer';
 
 void main() {
   runApp(MyApp());
@@ -32,41 +34,87 @@ class MyApp extends StatelessWidget {
         /* dark theme settings */
       ),
       themeMode: ThemeMode.dark,
-      home: MyHomePage(title: 'connect_ME'),
+      // home: MyHomePage(title: 'connect_ME'),
+      home: FrontPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
+// class MyHomePage extends StatefulWidget {
+//   MyHomePage({Key key, this.title}) : super(key: key);
+//
+//   // This widget is the home page of your application. It is stateful, meaning
+//   // that it has a State object (defined below) that contains fields that affect
+//   // how it looks.
+//
+//   // This class is the configuration for the state. It holds the values (in this
+//   // case the title) provided by the parent (in this case the App widget) and
+//   // used by the build method of the State. Fields in a Widget subclass are
+//   // always marked "final".
+//
+//   final String title;
+//
+//   @override
+//   // _MyHomePageState createState() => _MyHomePageState();
+// }
+class FrontPage extends StatelessWidget {
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('First Route'),
+      ),
+      body: Column(children: <Widget>[
+        Spacer(),
+        Center(
+            child: Text(
+          'connect_ME',
+          style: TextStyle(fontSize: 45),
+        )),
+        Spacer(),
+        ElevatedButton(
+          child: Text(
+            "Select Files to Send",
+            style: TextStyle(fontSize: 30),
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => LoadingPage()),
+            );
+          },
+        ),
+        ElevatedButton(
+          child: Text(
+            "Send Clipboard",
+            style: TextStyle(fontSize: 30),
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => LoadingPage()),
+            );
+          },
+        ),
+        Spacer(),
+      ]),
+    );
+  }
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class LoadingPage extends StatelessWidget {
   // initialize (send packet)
 
   // pick file
   String tempPath;
   List<File> files;
+  final myController = TextEditingController();
 
   Future getFile() async {
     Directory tempDir = await getTemporaryDirectory();
     tempPath = tempDir.path;
-    FilePickerResult result = await FilePicker.platform
-        .pickFiles(allowMultiple: true, type: FileType.any);
+    FilePickerResult result =
+        await FilePicker.platform.pickFiles(allowMultiple: true, type: FileType.any);
 
     if (result != null) {
       files = result.paths.map((path) => File(path)).toList();
@@ -77,6 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // print('this is temp path' + tempPath);
     //  print(await files[0].readAsBytesSync());
   }
+
   Future send() async {
     Socket socket = await Socket.connect('143.198.234.58', 1234);
     print('connected');
@@ -87,10 +136,11 @@ class _MyHomePageState extends State<MyHomePage> {
     });
 
     // send picture
-    socket.add(await files[0].readAsBytesSync());
-
-    // wait 5 seconds
-    await Future.delayed(Duration(seconds: 5));
+    for (var i = 0; i < files.length; i++) {
+      socket.add(await files[i].readAsBytesSync());
+      // wait 5 seconds
+      await Future.delayed(Duration(seconds: 5));
+    }
 
     // .. and close the socket
     socket.close();
@@ -109,7 +159,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -117,52 +166,83 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
+      // appBar: AppBar(
+      // Here we take the value from the MyHomePage object that was created by
+      // the App.build method, and use it to set our appbar title.
+      // title: Text(widget.title),
+      // ),
       body: Column(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         children: <Widget>[
           Spacer(),
           Center(
-              child: Text(
-            'connect_ME',
-            style: TextStyle(fontSize: 40),
+              child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Text(
+                'Host Label',
+                style: TextStyle(fontSize: 18),
+              ),
+              // Text(
+              //   '',
+              //   style: TextStyle(fontSize: 18),
+              // ),
+              SizedBox(
+                width: 200.0,
+                height: 100.0,
+
+                child: TextField(
+                  // controller: _textEditingController,
+                  controller: myController,
+                  obscureText: false,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(
+                        const Radius.circular(12.0),
+                      ),
+                    ),
+                    labelText: 'Type Host Field',
+                    labelStyle: TextStyle(color: Colors.white.withOpacity(0.8)),
+                  ),
+                ),
+
+                // Text(host_field.text)
+                //   decoration: InputDecoration(
+                //       border: OutlineInputBorder(), labelText: 'Enter Host Field'),
+                // )
+              )
+            ],
           )),
+
           Spacer(),
 
           Center(
               child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
               // Spacer(),
-                ElevatedButton(
-                  child: Text("Pick File"),
-                  onPressed: getFile,
-                  style: ElevatedButton.styleFrom(
+              ElevatedButton(
+                child: Text("Pick File"),
+                onPressed: getFile,
+                style: ElevatedButton.styleFrom(
                     primary: Colors.purple,
-                    textStyle: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold)
-                    ),
-                  ),
-
-                ElevatedButton(
-                 child: Text("Send File"),
-                  onPressed: send,
-                  style: ElevatedButton.styleFrom(
-                    primary: Colors.purple,
-                    textStyle: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold)
-                  ),
+                    textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
               ),
-            ], // closed widget
-          )), // closed Row
+
+              ElevatedButton(
+                child: Text("Send File"),
+                onPressed: send,
+                style: ElevatedButton.styleFrom(
+                    primary: Colors.purple,
+                    textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          )),
+          Spacer(),
+
           files == null ? Text('No image selected.') : Image.file(files[0]),
+          // TODO need to change files index (show error msg)
         ],
       ),
     );
