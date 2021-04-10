@@ -21,33 +21,32 @@ class Server:
         pass
 
     def listen(self):
-        try:
-
-            conn, addr = self.socket.accept()
-            # data, _ = util.recv_all_str(conn)
-            # string_return = "address:\t" + str(addr) + "\ndata:\t" + data
-            # print("Public address:\t", addr)
-            # print("Private address:\t", data)
-            # util.send_all_str(conn, string_return)
-            # print("Sent to client")
-            file_n, _ = util.recv_str(conn)
-            print(file_n)
-            if util.recv_bin(conn, file_n):
-                print("File successfully saved")
-                util.send_str(conn, "File successfully saved")
-            else:
-                print("File not saved")
-                util.send_str(conn, "File not saved")
-            print()
-            # conn.close()
-            # self.socket.close()
-        except Exception as err:
-            print(err)
-            # self.socket.close()
+        conn, addr = self.socket.accept()
+        while True:
+            try:
+                # data, _ = util.recv_all_str(conn)
+                # string_return = "address:\t" + str(addr) + "\ndata:\t" + data
+                # print("Public address:\t", addr)
+                # print("Private address:\t", data)
+                # util.send_all_str(conn, string_return)
+                # print("Sent to client")
+                file_n, _ = util.recv_str(conn)
+                print(file_n)
+                if util.recv_bin(conn, file_n):
+                    print("File successfully saved")
+                    util.send_str(conn, "File successfully saved")
+                else:
+                    print("File not saved")
+                    util.send_str(conn, "File not saved")
+                print()
+                # conn.close()
+                # self.socket.close()
+            except Exception as err:
+                print(err)
+                # self.socket.close()
 
 
 if __name__ == '__main__':
     # print("Nothing here yet")
     serv = Server()
-    while True:
-        serv.listen()
+    serv.listen()
