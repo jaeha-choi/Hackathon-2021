@@ -53,9 +53,10 @@ def send_str(conn: socket.socket, msg: str, encoding: str = "utf-8") -> bool:
         # Sends size of the file in first four bytes
         b_msg = struct.pack('!L', len(msg)) + msg.encode(encoding=encoding)
         print("send_str:\tPacket size:", len(msg))  # Debug
-        while b_msg:
-            sent_bytes = conn.send(b_msg)
-            b_msg = b_msg[sent_bytes:]
+        conn.sendall(b_msg)
+        # while b_msg:
+        #     sent_bytes = conn.send(b_msg)
+        #     b_msg = b_msg[sent_bytes:]
     except UnicodeError as err:
         print("Encoding error:", err)
         return False
