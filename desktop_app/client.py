@@ -70,9 +70,9 @@ class Client:
 
 if __name__ == '__main__':
     client = Client('143.198.234.58', 1234)
-    util.exec_res(client.connect)
-    util.exec_res(client.send_uuid)
-    util.exec_res(client.send_file, ("./test/cat.png", "dog.png"))
-    util.exec_res(client.send_file, ("./test/cat2.JPG", "stars.JPG"))
-    util.exec_res(client.send_heartbeat)
+    # util.exec_res(client.connect)
+    # util.exec_res(client.send_uuid)
+    # util.exec_res(client.send_file, ("./test/cat.png", "dog.png"))
+    # util.exec_res(client.send_file, ("./test/cat2.JPG", "stars.JPG"))
+    # util.exec_res(client.send_heartbeat)
     client.close()

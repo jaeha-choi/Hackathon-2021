@@ -3,7 +3,7 @@ import os
 import socket
 import struct
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 
 class Command(Enum):
@@ -25,9 +25,9 @@ class ExitCode(Enum):
     FAIL_GENERAL = 1
 
 
-def exec_res(function: Callable, *args: tuple[Any, ...]) -> None:
-    res = function(args[0][0], args[0][1]) if len(args) else function()
-    print("Function \033[96m%s\033[0m returned code: %s" % (str(function.__name__), res.name))
+# def exec_res(function: Callable, *args: tuple[Any, ...]) -> None:
+#     res = function(args[0][0], args[0][1]) if len(args) else function()
+#     print("Function \033[96m%s\033[0m returned code: %s" % (str(function.__name__), res.name))
 
 
 def validate(ip_addr: str, port: int):
