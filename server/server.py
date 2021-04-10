@@ -9,6 +9,8 @@ from utility.util import ExitCode
 
 # Terminate connection if empty packet is being sent for TERMINATE_TH sec
 TERMINATE_TH = 30
+log.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',
+                level=log.DEBUG, datefmt='%m/%d/%Y %I:%M:%S %p')
 
 
 class Server:
@@ -31,7 +33,7 @@ class Server:
 
     def listen(self):
         conn, addr = self.socket.accept()
-        while self.err_cnt < TERMINATE_TH:
+        while self.err_cnt <= TERMINATE_TH:
             try:
                 command, res = util.recv_str(conn)
                 if not res:
@@ -80,10 +82,11 @@ class Server:
 
             except Exception as err:
                 log.error("Unknown Error at listen", err)
-        # If error exceeds TERMINATE_TH threshold, close connection.
-        conn.close()
-        self.err_cnt = 0
-        log.warning("Closing connection due to errors.")
+        if self.err_cnt > TERMINATE_TH:
+            # If error exceeds TERMINATE_TH threshold, close connection.
+            conn.close()
+            self.err_cnt = 0
+            log.warning("Closing connection due to errors.")
 
 
 if __name__ == '__main__':
