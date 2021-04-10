@@ -1,6 +1,26 @@
 import os
 import socket
 import struct
+from enum import Enum
+from typing import Any
+
+
+class Command(Enum):
+    def __str__(self):
+        return str(self.value)
+
+    ADD = "ADD"
+    EXIT = "EXT"
+    HEARTBEAT = "HRB"
+    TRANSFER = "TRF"
+
+
+class ExitCode(Enum):
+    def __str__(self):
+        return str(self.value)
+
+    SUCCESS = 0
+    FAIL_GENERAL = 1
 
 
 def validate(ip_addr: str, port: int):
@@ -39,7 +59,7 @@ def _recv_n_byte(conn: socket.socket, packet_size: int):
     return data
 
 
-def send_str(conn: socket.socket, msg: str, encoding: str = "utf-8") -> bool:
+def send_str(conn: socket.socket, msg: Any, encoding: str = "utf-8") -> bool:
     """
     Send text as string format
     :param conn: Connection socket
@@ -51,7 +71,7 @@ def send_str(conn: socket.socket, msg: str, encoding: str = "utf-8") -> bool:
         # This is inefficient as the size can get big very fast
         # b_msg = b'%i]' % len(b_msg) + msg.encode(encoding=encoding)
         # Sends size of the file in first four bytes
-        b_msg = struct.pack('!L', len(msg)) + msg.encode(encoding=encoding)
+        b_msg = struct.pack('!L', len(str(msg))) + msg.encode(encoding=encoding)
         # print("send_str:\tPacket size:", len(msg))  # Debug
         conn.sendall(b_msg)
         # while b_msg:
