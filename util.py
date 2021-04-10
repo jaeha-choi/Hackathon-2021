@@ -52,7 +52,7 @@ def send_str(conn: socket.socket, msg: str, encoding: str = "utf-8") -> bool:
         # b_msg = b'%i]' % len(b_msg) + msg.encode(encoding=encoding)
         # Sends size of the file in first four bytes
         b_msg = struct.pack('!L', len(msg)) + msg.encode(encoding=encoding)
-        print("send_str:\tPacket size:", len(msg))  # Debug
+        # print("send_str:\tPacket size:", len(msg))  # Debug
         conn.sendall(b_msg)
         # while b_msg:
         #     sent_bytes = conn.send(b_msg)
@@ -83,7 +83,7 @@ def recv_str(conn: socket.socket, encoding: str = "utf-8") -> (str, bool):
 
         # convert byte to unsigned long
         packet_size = struct.unpack('!L', pkg_len)[0]
-        print("recv_str:\tPacket size:", packet_size)  # Debug
+        # print("recv_str:\tPacket size:", packet_size)  # Debug
         data = _recv_n_byte(conn, packet_size)
         string = data.decode(encoding)
     except UnicodeError as err:
@@ -107,7 +107,7 @@ def send_bin(conn: socket.socket, file_n: str, buff_size: int = 4096) -> bool:
     try:
         with open(file_n, "rb") as file:
             b_msg = struct.pack('!L', os.path.getsize(file_n))
-            print("send_bin:\tPacket size:", os.path.getsize(file_n))  # Debug
+            # print("send_bin:\tPacket size:", os.path.getsize(file_n))  # Debug
             conn.send(b_msg)
             while True:
                 bytes_read = file.read(buff_size)
@@ -139,7 +139,7 @@ def recv_bin(conn: socket.socket, file_n: str) -> bool:
     try:
         pkg_len = _recv_n_byte(conn, 4)
         packet_size = struct.unpack('!L', pkg_len)[0]
-        print("recv_bin:\tPacket size:", packet_size)  # Debug
+        # print("recv_bin:\tPacket size:", packet_size)  # Debug
         with open(file_n, "wb") as file:
             data = _recv_n_byte(conn, packet_size)
             file.write(data)
