@@ -136,9 +136,8 @@ def recv_bin(conn: socket.socket, file_n: str) -> bool:
         packet_size = struct.unpack('!L', pkg_len)[0]
         print("recv_bin:\tPacket size:", packet_size)  # Debug
         with open(file_n, "wb") as file:
-            while file:
-                data = _recv_n_byte(conn, packet_size)
-                file.write(data)
+            data = _recv_n_byte(conn, packet_size)
+            file.write(data)
     except ValueError as err:
         print("Encoding error:", err)
         return False
