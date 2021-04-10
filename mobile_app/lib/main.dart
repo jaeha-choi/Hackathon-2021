@@ -4,8 +4,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/material.dart';
-import 'dart:developer';
 
 void main() {
   runApp(MyApp());
@@ -35,7 +33,7 @@ class MyApp extends StatelessWidget {
       ),
       themeMode: ThemeMode.dark,
       // home: MyHomePage(title: 'connect_ME'),
-      home: FrontPage(),
+      home: FrontPage(title: 'connect_ME'),
     );
   }
 }
@@ -55,9 +53,18 @@ class MyApp extends StatelessWidget {
 //   final String title;
 //
 //   @override
-//   // _MyHomePageState createState() => _MyHomePageState();
+//   _MyHomePageState createState() => _MyHomePageState();
 // }
-class FrontPage extends StatelessWidget {
+
+class FrontPage extends StatefulWidget {
+  FrontPage({Key key, this.title}) : super(key: key);
+  final String title;
+
+  @override
+  State<StatefulWidget> createState() => _FrontPageState();
+}
+
+class _FrontPageState extends State<FrontPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,15 +109,20 @@ class FrontPage extends StatelessWidget {
   }
 }
 
-class LoadingPage extends StatelessWidget {
+class LoadingPage extends StatefulWidget {
   // initialize (send packet)
+  @override
+  State<StatefulWidget> createState() => _LoadingPageState();
+}
 
+class _LoadingPageState extends State<LoadingPage> {
   // pick file
   String tempPath;
   List<File> files;
   final myController = TextEditingController();
 
   Future getFile() async {
+    print(myController.text);
     Directory tempDir = await getTemporaryDirectory();
     tempPath = tempDir.path;
     FilePickerResult result =
@@ -121,10 +133,32 @@ class LoadingPage extends StatelessWidget {
     } else {
       // User canceled the picker
     }
-    // print(files[0]);
     // print('this is temp path' + tempPath);
     //  print(await files[0].readAsBytesSync());
   }
+
+  Future getImage() async {
+    Directory tempDir = await getTemporaryDirectory();
+    tempPath = tempDir.path;
+    FilePickerResult result =
+        await FilePicker.platform.pickFiles(allowMultiple: true, type: FileType.image);
+    if (result != null) {
+      files = result.paths.map((path) => File(path)).toList();
+      setState(() {});
+    } else {
+      // User canceled the picker
+    }
+  }
+
+  // void state() {
+  //   setState(() {
+  //     // This call to setState tells the Flutter framework that something has
+  //     // changed in this State, which causes it to rerun the build method below
+  //     // so that the display can reflect the updated values. If we changed
+  //     // _counter without calling setState(), then the build method would not be
+  //     // called again, and so nothing would appear to happen.
+  //   });
+  // }
 
   Future send() async {
     Socket socket = await Socket.connect('143.198.234.58', 1234);
@@ -139,6 +173,7 @@ class LoadingPage extends StatelessWidget {
     for (var i = 0; i < files.length; i++) {
       socket.add(await files[i].readAsBytesSync());
       // wait 5 seconds
+      print(files[i]);
       await Future.delayed(Duration(seconds: 5));
     }
 
@@ -159,6 +194,14 @@ class LoadingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    int itemCount;
+    String file_name;
+
+    if (files == null) {
+      itemCount = 0;
+    } else {
+      itemCount = files.length;
+    }
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -175,6 +218,31 @@ class LoadingPage extends StatelessWidget {
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         children: <Widget>[
+          itemCount > 0
+              ? ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: itemCount,
+                  itemBuilder: (BuildContext context, int index) {
+                    return ListTile(
+                      title: Text(files[index].toString().substring(files[index].toString().lastIndexOf('/')+1)),
+                    );
+                  },
+                )
+              : Center(child: const Text('No items')),
+          //
+          //   ListView.builder(
+          //   padding: const EdgeInsets.all(8),
+          //     itemCount: entries.length,
+          //     shrinkWrap: true,
+          //     itemBuilder: (BuildContext context, int index) {
+          //       return Container(
+          //         height: 50,
+          //         color: Colors.amber[colorCodes[index]],
+          //         child: Center(child: Text('Entry ${entries[index]}')),
+          //
+          //       );
+          //     }
+          // ),
           Spacer(),
           Center(
               child: Row(
@@ -182,15 +250,15 @@ class LoadingPage extends StatelessWidget {
             children: <Widget>[
               Text(
                 'Host Label',
-                style: TextStyle(fontSize: 18),
+                style: TextStyle(fontSize: 20),
               ),
               // Text(
               //   '',
               //   style: TextStyle(fontSize: 18),
               // ),
               SizedBox(
-                width: 200.0,
-                height: 100.0,
+                width: 150.0,
+                height: 70.0,
 
                 child: TextField(
                   // controller: _textEditingController,
@@ -223,25 +291,30 @@ class LoadingPage extends StatelessWidget {
             children: <Widget>[
               // Spacer(),
               ElevatedButton(
-                child: Text("Pick File"),
+                child: Text("Select Files"),
                 onPressed: getFile,
                 style: ElevatedButton.styleFrom(
                     primary: Colors.purple,
-                    textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+                    textStyle: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
               ),
-
               ElevatedButton(
-                child: Text("Send File"),
-                onPressed: send,
+                child: Text("Select Images"),
+                onPressed: getImage,
                 style: ElevatedButton.styleFrom(
                     primary: Colors.purple,
-                    textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+                    textStyle: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
               ),
             ],
           )),
+          ElevatedButton(
+            child: Text("Send File"),
+            onPressed: send,
+            style: ElevatedButton.styleFrom(
+                primary: Colors.purple,
+                textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+          ),
           Spacer(),
 
-          files == null ? Text('No image selected.') : Image.file(files[0]),
           // TODO need to change files index (show error msg)
         ],
       ),
