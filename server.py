@@ -31,6 +31,7 @@ class Server:
             # util.send_all_str(conn, string_return)
             # print("Sent to client")
             file_n, _ = util.recv_str(conn)
+            print(file_n)
             if util.recv_bin(conn, file_n):
                 print("File successfully saved")
                 util.send_str(conn, "File successfully saved")
