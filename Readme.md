@@ -14,9 +14,11 @@ Github repo: https://github.com/jaeha-choi/Hackathon-2021
 - Mobile: Android/iOS
 
 ### Dependencies:
-- `PyQt`: Used for client GUI
+- `Python`: Base language for server / desktop clients
 - `Flutter`: Used for android/iOS apps
-- `Python`: Base language
+- `PyQt==5.15.4`: Used for client GUI
+- `pyperclip==1.8.2`: Used for clipboard
+- `qdarkstyle==3.0.2`: Used for dark mode on desktop client
 
 ## **GUI Requirements**
 
