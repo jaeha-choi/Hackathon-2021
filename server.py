@@ -1,6 +1,8 @@
 import socket
 import uuid
 
+import util
+
 
 class Server:
     def __init__(self):
@@ -15,19 +17,18 @@ class Server:
     def add(self, uid: uuid.UUID, ip_addr: str, port: int):
         self.clients[uid] = (ip_addr, port)
 
+    def load_clients(self):
+        pass
+
     def listen(self):
         try:
 
             conn, addr = self.socket.accept()
             data = conn.recv(4096)
             string_return = "address:\t" + str(addr) + "\ndata:\t" + str(data)
-            # print("address:\t", addr)
-            # print("data:\t", data)
-            string_return = string_return.encode()
-            conn.send(b'coconut')
-            while string_return:
-                bytes = conn.send(string_return)
-                string_return = string_return[bytes:]
+            print("address:\t", addr)
+            print("data:\t", data)
+            util.send_all_str(conn, string_return)
             print("sent")
             conn.close()
             self.socket.close()
