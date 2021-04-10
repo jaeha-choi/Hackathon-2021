@@ -28,13 +28,13 @@ def send_str(conn: socket.socket, msg: str, encoding: str = "utf-8") -> bool:
         print("Encoding error:", err)
         return False
     except:
-        print("Unknown error in send_all_str")
+        print("Unknown error in send_str")
         return False
 
     return True
 
 
-# Generic function to receive n amount of bytes
+# Private function to receive n amount of bytes
 def _recv_n_byte(conn: socket.socket, packet_size: int):
     data = b''
     try:
@@ -44,7 +44,7 @@ def _recv_n_byte(conn: socket.socket, packet_size: int):
                 return None
             data += packet
     except:
-        print("Unknown error in recv_n_byte")
+        print("Unknown error in _recv_n_byte")
         return None
     return data
 
@@ -65,7 +65,7 @@ def recv_str(conn: socket.socket, encoding: str = "utf-8") -> (str, bool):
         print("Decoding error:", err)
         return string, False
     except:
-        print("Unknown error in recv_all_str")
+        print("Unknown error in recv_str")
         return string, False
 
     return string, True
@@ -86,7 +86,7 @@ def send_bin(conn: socket.socket, file_n: str, buff_size: int = 4096) -> bool:
     except OSError as err:
         print("File error:", err)
     except:
-        print("Unknown error in send_all_bin")
+        print("Unknown error in send_bin")
         return False
 
     return True
@@ -107,7 +107,7 @@ def recv_bin(conn: socket.socket, file_n: str) -> bool:
     except OSError as err:
         print("File error:", err)
     except:
-        print("Unknown error in send_all_bin")
+        print("Unknown error in recv_bin")
         return False
 
     return True
