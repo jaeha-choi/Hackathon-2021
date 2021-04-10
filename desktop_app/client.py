@@ -74,4 +74,4 @@ if __name__ == '__main__':
     _exec_res(client.send_file, ("./test/cat.png", "dog.png"))
     _exec_res(client.send_file, ("./test/cat2.JPG", "stars.JPG"))
     _exec_res(client.send_heartbeat)
-    # client.close()
+    client.close()
