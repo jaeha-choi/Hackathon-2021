@@ -7,7 +7,7 @@ from utility.util import ExitCode
 
 
 class Client:
-    def __init__(self, server_ip: str, server_port: int):
+    def __init__(self, server_ip: str, server_port: int, uid: uuid.UUID = uuid.uuid4()):
         # Communication/relay server
         self.server_ip = server_ip
         self.server_port = server_port
@@ -20,7 +20,7 @@ class Client:
         # self.conn.settimeout(5)
         # self.conn.bind((self.SERVER, self.PORT))
         # TODO: Consider using UUIDv5
-        self.uuid = uuid.uuid4()
+        self.uuid = uid
 
     def _send_command(self, command: Command) -> bool:
         return util.send_str(self.server_conn, str(command))
@@ -69,9 +69,9 @@ class Client:
 
 
 if __name__ == '__main__':
-    client = Client('143.198.234.58', 1234)
-    # util.exec_res(client.connect)
-    # util.exec_res(client.send_uuid)
+    client = Client('', 1234)
+    client.connect()
+    client.send_uuid()
     # util.exec_res(client.send_file, ("./test/cat.png", "dog.png"))
     # util.exec_res(client.send_file, ("./test/cat2.JPG", "stars.JPG"))
     # util.exec_res(client.send_heartbeat)
