@@ -57,10 +57,15 @@ class MyWindow(QMainWindow):
         self.listWidget.setObjectName("listView")
         self.listWidget.move(50, 500)
 
-        # Host Label Text-Box
-        self.hostLabelTextBox = QtWidgets.QLabel(self)
-        self.uniqueID = "Your ID: \n" + str(uuid.uuid4())  # User's unique ID
-        self.hostLabelTextBox.setText(self.uniqueID)
+        # Host Label Text
+        self.yourUniqueID = QLabel(self)
+        self.yourUniqueID.setText("Your Unique ID:")
+
+        # Host Label Button: Copies to Clipboard
+        self.hostLabelTextButton = QPushButton(self)
+        self.uniqueID = str(uuid.uuid4())  # User's unique ID
+        self.hostLabelTextButton.setText(self.uniqueID)
+        self.hostLabelTextButton.clicked.connect(self.hostLabel)
 
         # Host Field Text-Box
         self.hostFieldTextBox = QLineEdit(self)
@@ -94,7 +99,8 @@ class MyWindow(QMainWindow):
         # Add Widgets to Layout
         layout.addWidget(self.deleteFileButton)
         layout.addWidget(self.listWidget)
-        layout.addWidget(self.hostLabelTextBox)
+        layout.addWidget(self.yourUniqueID)
+        layout.addWidget(self.hostLabelTextButton)
         layout.addWidget(self.hostFieldTextBox)
         layout.addWidget(self.sendFilesButton)
         layout.addWidget(self.pickFilesButton)
@@ -113,6 +119,9 @@ class MyWindow(QMainWindow):
         if not listItems: return
         for item in listItems:
             self.listWidget.takeItem(self.listWidget.row(item))
+
+    def hostLabel(self):
+        pyperclip.copy(self.uniqueID)
 
     def pickFiles(self):
         # Mac OS
