@@ -16,6 +16,7 @@ log.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',
 class Server:
 
     def __init__(self, ip: str, port: int):
+        # TODO: Validate IP addr/port
         self.ip = ip
         self.port = port
         self.clients = {}
