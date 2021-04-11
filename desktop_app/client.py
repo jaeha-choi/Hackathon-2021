@@ -61,7 +61,7 @@ class Client:
     def send_clip(self, recv_uid: str, content: str) -> ExitCode:
         pass
 
-    def send_file_relay(self, file_n: str, server_save_n: str) -> ExitCode:
+    def send_file_relay(self, recv_uid: str, file_n: str, server_save_n: str) -> ExitCode:
         pass
 
     def send_file(self, file_n: str, server_save_n: str) -> ExitCode:
