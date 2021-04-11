@@ -80,4 +80,4 @@ if __name__ == '__main__':
     # util.exec_res(client.send_file, ("./test/cat.png", "dog.png"))
     # util.exec_res(client.send_file, ("./test/cat2.JPG", "stars.JPG"))
     # util.exec_res(client.send_heartbeat)
-    client.close()
+    # client.close()

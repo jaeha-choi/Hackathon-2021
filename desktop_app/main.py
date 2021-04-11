@@ -1,4 +1,5 @@
 import sys
+import uuid
 
 import pyperclip
 import qdarkstyle
@@ -184,6 +185,7 @@ def window():
     win = MyWindow()
     win.show()
     sys.exit(app.exec_())
+    client.close()
 
 
 window()
