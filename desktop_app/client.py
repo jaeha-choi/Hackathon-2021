@@ -25,6 +25,10 @@ class Client:
         # TODO: Consider using UUIDv5
         self.uuid = uid
 
+        # TODO: DELETE THIS SHIZ
+        print("Test: DELETE AFTER")
+        print(self.uuid)
+
     def _send_command(self, command: Command) -> bool:
         return util.send_str(self.server_conn, str(command))
 
@@ -116,5 +120,5 @@ if __name__ == '__main__':
     client = Client('143.198.234.58', 1234)
     client.connect()
     client.send_uuid()
-    # client.recv_file_relay()
+    client.recv_file_relay()
     client.close()
