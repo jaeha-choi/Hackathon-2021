@@ -8,8 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import "dart:typed_data";
-import 'util.dart';
-
+import 'util2.dart';
 void main() {
   runApp(MyApp());
 }
@@ -64,12 +63,12 @@ class MyApp extends StatelessWidget {
 class FrontPage extends StatefulWidget {
   FrontPage({Key key, this.title}) : super(key: key);
   final String title;
-
   @override
   State<StatefulWidget> createState() => _FrontPageState();
 }
 
 class _FrontPageState extends State<FrontPage> {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,10 +76,10 @@ class _FrontPageState extends State<FrontPage> {
             child: Container(
       constraints: BoxConstraints.expand(),
       decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage("images/spacex.jpg"),
-          fit: BoxFit.cover,
-        ),
+        // image: DecorationImage(
+        //   image: AssetImage("images/spacex.jpg"),
+        //   fit: BoxFit.cover,
+        // ),
       ),
       child: Column(
         children: <Widget>[
@@ -116,22 +115,49 @@ class _FrontPageState extends State<FrontPage> {
   }
 }
 
+
+// void connects_to_socket() async {
+//   // socket = await RawSocket('143.198.234.58', 1234);
+//   RawSocket socket = await RawSocket.connect('143.198.234.58', 1234);
+// }
+
 class LoadingPage extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _LoadingPageState();
+
 }
 
+Future<String> getFilePath() async {
+  /*    We call getApplicationDocumentsDirectory. This comes from the path_provider package that we installed earlier. This will get whatever the common documents directory is for the platform that we are using.
+    Get the path to the documents directory as a String
+    Create the full file path as a String.
+   */
+  Directory appDocumentsDirectory = await getApplicationDocumentsDirectory(); // 1
+  String appDocumentsPath = appDocumentsDirectory.path; // 2
+  String filePath = '$appDocumentsPath/demoTextFile.txt'; // 3
+  return filePath;
+}
+
+
 class _LoadingPageState extends State<LoadingPage> {
-  Socket socket;
+  @override
+  void initState() {
+    connects_to_socket();
+    print("Socket is connected");
+    sendUuid();
+    print("Sent uuid to server");
+
+    close();
+    print("Closed the socket conn")
+  }
+
+  RawSocket socket;
   String tempPath;
   List<File> files;
   var uid = "";
   final myController = TextEditingController();
 
-  String genUuid() {
-    var uuid = Uuid();
-    return uuid.v4();
-  }
+
 
   void connects_to_socket() async {
     if (uid.isEmpty) {
@@ -140,12 +166,65 @@ class _LoadingPageState extends State<LoadingPage> {
       });
     }
     try {
-      socket = await Socket.connect('143.198.234.58', 1234);
+      socket = await RawSocket.connect('143.198.234.58', 1234);
     } on SocketException catch (e) {
       print("Could not connect to the server:");
       print(e);
     }
   }
+
+
+  String genUuid() {
+    var uuid = Uuid();
+    return uuid.v4();
+  }
+
+  Future close() {
+    send_string('EXT');
+    socket.close();
+  }
+
+  Future<void> send_bin(RawSocket conn, File file, int buff_size ) async {
+    /*
+    Send file as binary format. Could return error if folder
+    permission is incorrect, path does not exist, etc.
+    :param conn: Connection socket
+    :param file_n: File name to save as
+    :param buff_size: Size of a buffer
+    :return: True if successfully sent, False otherwise.
+   */ // location , fileN , path
+    try {
+      // final path = await _localPath;
+      // final file = await _localFile;
+      for (var i = 0; i < files.length; i++) {
+        send_string('TRF');
+        String fileName = files[i].toString();
+        send_string(fileName.substring(
+            fileName.lastIndexOf('/') + 1, fileName.length - 1));
+        var image = files[i].readAsBytesSync();
+        var size = image.length;
+        socket.write(int32BigEndianBytes(size) + image);
+        //    size of image(BINARY) and image(BINARY)
+        // wait 5 seconds
+        await Future.delayed(Duration(seconds: 5));
+      }
+      // var b_msg = send_string(file_n); // send size of the file first
+      // // conn.add(b_msg);
+      // while (true) {
+      //   var bytes_read = await file.readAsBytes();
+      //   if (bytes_read.isEmpty) {
+      //     return;
+      //   } else {
+      //     conn.add(bytes_read);
+      //   }
+      // }
+    } catch (error) {
+      print("Unknown error in send_bin" + error);
+      return false;
+    }
+    return true;
+  }
+
 
   Future getFile() async {
     Directory tempDir = await getTemporaryDirectory();
@@ -174,16 +253,8 @@ class _LoadingPageState extends State<LoadingPage> {
     }
   }
 
-  // void state() {
-  //   setState(() {
-  //     // This call to setState tells the Flutter framework that something has
-  //     // changed in this State, which causes it to rerun the build method below
-  //     // so that the display can reflect the updated values. If we changed
-  //     // _counter without calling setState(), then the build method would not be
-  //     // called again, and so nothing would appear to happen.
-  //   });
-  // }
-
+  // application opens connection
+  // send uuid
   // change integer to binary
   Uint8List int32BigEndianBytes(int value) =>
       Uint8List(4)..buffer.asByteData().setInt32(0, value, Endian.big);
@@ -193,7 +264,7 @@ class _LoadingPageState extends State<LoadingPage> {
     var bytes = utf8.encode('HRB');
     var size = int32BigEndianBytes(bytes.length);
     print(size + bytes);
-    socket.add(size + bytes);
+    socket.write(size + bytes);
   }
 
   Future send_string(String str) async {
@@ -206,7 +277,7 @@ class _LoadingPageState extends State<LoadingPage> {
     var bytes = utf8.encode(str);
     // switch len(var bytes) to binary and store to size
     var size = int32BigEndianBytes(bytes.length);
-    socket.add(size + bytes);
+    socket.write(size + bytes);
   }
 
   Future send_file() async {
@@ -217,9 +288,9 @@ class _LoadingPageState extends State<LoadingPage> {
     print(socket);
     print('connected');
     //listen to the received data event stream
-    socket.listen((List<int> event) {
-      print(utf8.decode(event));
-    });
+    // socket.listen((List<int> event) {
+    //   print(utf8.decode(event));
+    // });
 
     // send picture
     // convert 3 to bytes take string trf convert to bytes and append in addhere
@@ -231,7 +302,7 @@ class _LoadingPageState extends State<LoadingPage> {
           fileName.lastIndexOf('/') + 1, fileName.length - 1));
       var image = files[i].readAsBytesSync();
       var size = image.length;
-      socket.add(int32BigEndianBytes(size) + image);
+      socket.write(int32BigEndianBytes(size) + image);
       //    size of image(BINARY) and image(BINARY)
       // wait 5 seconds
       await Future.delayed(Duration(seconds: 5));

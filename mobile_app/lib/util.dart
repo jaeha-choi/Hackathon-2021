@@ -24,12 +24,11 @@ Uint8List _recv_n_byte(RawSocket socket, packet_size) {
     */
   var data;
   // var socket1 = Socket.connect('143.198.234.58', 1234);
-  while (data.length < packet_size){
-    var packet  = socket.read(packet_size -data.length);
+  while (data.length < packet_size) {
+    var packet = socket.read(packet_size - data.length);
     if (packet == null) {
       return null; // TODO not sure
-    }
-    else {
+    } else {
       data += packet;
     }
     return data;
@@ -37,13 +36,17 @@ Uint8List _recv_n_byte(RawSocket socket, packet_size) {
   }
 }
 
-int _get_pkt_size(RawSocket socket) {
+int _get_pkt_size(RawSocket conn) {
+  /*
+      Get the packet size by unpacking first four bytes of the data
+    :param conn: Connection socket
+    :return: Size of a single file, string. null if no packet received.
+   */
   //Receive first four bytes
-  var b_pkt_len = _recv_n_byte(socket, 4);
-  if (b_pkt_len == null){
+  var b_pkt_len = _recv_n_byte(conn, 4);
+  if (b_pkt_len == null) {
     return null;
-  }
-  else{
+  } else {
     //convert byte to unsigned long
     return int8bytes(b_pkt_len);
   }
@@ -59,7 +62,7 @@ bool passthrough(send_conn, recv_conn) {
    */
   int total_received;
   try {
-     int packet_size = _get_pkt_size(send_conn);
+    int packet_size = _get_pkt_size(send_conn);
     if (packet_size == null) {
       return false;
     }
@@ -67,83 +70,20 @@ bool passthrough(send_conn, recv_conn) {
     recv_conn.send_string(packet_size);
 
     while (total_received < packet_size) {
-          var packet = send_conn(packet_size - total_received);
-          if (packet == null ){
-            return false;
-          } else{
-            total_received += packet.length;
-            recv_conn.add(int32BigEndianBytes(packet_size));
-          }
+      var packet = send_conn(packet_size - total_received);
+      if (packet == null) {
+        return false;
+      } else {
+        total_received += packet.length;
+        recv_conn.add(int32BigEndianBytes(packet_size));
+      }
     }
   } catch (error) {
-    print("Unknown error in passthrough");
+    print("Unknown error in passthrough" + error);
     return false;
   }
   return true;
 }
-
- List recv_str(conn, text) {
-   /*
-    Receive text as string format. If packet is not being sent, raises exception.
-    :param conn: Connection socket
-    :param encoding: Encoding to use for string
-    :return: Tuple of received string and Boolean indicating the receive status.
-    */
-   String string = '';
-   try {
-     var packet_size = _get_pkt_size(conn);
-     if (packet_size == null) {
-       return [string, false];
-     }
-     else {
-       var data = _recv_n_byte(conn, packet_size);
-       string = utf8.decode(data);
-     }
-   } catch (error) {
-     print("Unknown error in recv_str");
-     return [string, false];
-   }
-   return [string, true];
- }
-
-bool send_bin(conn, file_n, buff_size) {
-  /*
-    Send file as binary format. Could return error if folder
-    permission is incorrect, path does not exist, etc.
-    :param conn: Connection socket
-    :param file_n: File name to save as
-    :param buff_size: Size of a buffer
-    :return: True if successfully sent, False otherwise.
-
-   */
-  try{
-    var file = OpenFile.open(file_n);
-  }
-}
-
-
-Future<bool> recv_bin(RawSocket socket, file_name)async {
-  /*
-    Receive file as binary format
-    :param conn: Connection socket
-    :param file_n: File name to save as
-    :return: True if successfully received, False otherwise.
-    */
-
-  int packet_size = _get_pkt_size(socket);
-
-  if (packet_size = null) {
-    return false;
-  } else {
-    // TODO
-    File file = File(await getFilePath());
-    var data = _recv_n_byte(socket, packet_size);
-    file.writeAsBytes(data);
-    return true;
-  }
-}
-
-// Done with util.py
 
 Future send_string(String str) async {
   /*
@@ -158,9 +98,65 @@ Future send_string(String str) async {
   socket.add(size + bytes);
 }
 
-void connects_to_socket() async {
-  socket = await Socket.connect('143.198.234.58', 1234);
+List recv_str(RawSocket conn, text) {
+  /*
+    Receive text as string format. If packet is not being sent, raises exception.
+    :param conn: Connection socket
+    :param encoding: Encoding to use for string
+    :return: Tuple of received string and Boolean indicating the receive status.
+    */
+  String string = '';
+  try {
+    var packet_size = _get_pkt_size(conn);
+    if (packet_size == null) {
+      return [string, false];
+    } else {
+      var data = _recv_n_byte(conn, packet_size);
+      string = utf8.decode(data);
+    }
+  } catch (error) {
+    print("Unknown error in recv_str" + error);
+    return [string, false];
+  }
+  return [string, true];
 }
+
+Future<String> get _localPath async {
+  final directory = await getApplicationDocumentsDirectory();
+  // return path
+  return directory.path;
+}
+
+Future<File> get _localFile async {
+  final path = await _localPath;
+  return File('$path/EXAMPLE.jpg');
+}
+
+
+
+// Future<bool> recv_bin(RawSocket socket, file_name) async {
+//   /*
+//     Receive file as binary format
+//     :param conn: Connection socket
+//     :param file_n: File name to save as
+//     :return: True if successfully received, False otherwise.
+//     */
+//   try {
+//     int packet_size = _get_pkt_size(socket);
+//     if (packet_size = null) {
+//       return false;
+//     } else {
+//       File file = File(await getFilePath());
+//       var data = _recv_n_byte(socket, packet_size);
+//       file.writeAsBytes(data);
+//     }
+//   }
+//
+// }
+
+// Done with util.py
+
+
 
 Future<String> getFilePath() async {
   /*    We call getApplicationDocumentsDirectory. This comes from the path_provider package that we installed earlier. This will get whatever the common documents directory is for the platform that we are using.
@@ -175,14 +171,11 @@ Future<String> getFilePath() async {
 }
 
 // chang byte to long (64bits unsigned
-// Uint64List int8BigEndianBytes(var value) =>
-//     Uint64List(64)..buffer.asInt64List().setInt64(0, value, Endian.big);
 int int8bytes(Uint8List value) {
   var buffer = value.buffer;
   var bdata = new ByteData.view(buffer);
   return bdata.getUint32(0);
 }
-
 
 // change signed integer to binary
 Uint8List int32BigEndianBytes(int value) =>
@@ -195,23 +188,17 @@ Future send_heart_beat() async {
   socket.add(size + bytes);
 }
 
-
-
-
-
-Future connect(){
+Future connect() {
   connects_to_socket();
-  print('Connected to a server ' );
+  print('Connected to a server ');
   return send_heart_beat();
 }
-
-
 
 Future getFile() async {
   Directory tempDir = await getTemporaryDirectory();
   tempPath = tempDir.path;
   FilePickerResult result =
-  await FilePicker.platform.pickFiles(allowMultiple: true, type: FileType.any);
+      await FilePicker.platform.pickFiles(allowMultiple: true, type: FileType.any);
 
   if (result != null) {
     files = result.paths.map((path) => File(path)).toList();
@@ -225,7 +212,7 @@ Future getImage() async {
   Directory tempDir = await getTemporaryDirectory();
   tempPath = tempDir.path;
   FilePickerResult result =
-  await FilePicker.platform.pickFiles(allowMultiple: true, type: FileType.image);
+      await FilePicker.platform.pickFiles(allowMultiple: true, type: FileType.image);
   if (result != null) {
     files = result.paths.map((path) => File(path)).toList();
     // setState(() {});
@@ -233,6 +220,12 @@ Future getImage() async {
     // User canceled the picker
   }
 }
+
+void connects_to_socket() async {
+  // socket = await RawSocket('143.198.234.58', 1234);
+  RawSocket socket = await RawSocket.connect('143.198.234.58', 1234);
+}
+
 Future send_file() async {
   /*
     :return: Received data in bytes. None if not all bytes were received.
@@ -262,10 +255,6 @@ Future send_file() async {
 }
 
 
-Future close() {
-  send_string('EXT');
-  socket.close();
-}
 
 var my_uuid = get_uuid();
 
@@ -279,15 +268,17 @@ void send_uuid() {
   // send priv_port
   send_string(socket.port.toString());
 }
+
 // getting Uuid ();
 String get_uuid() {
   var uuid = Uuid();
   return uuid.v4();
 }
+
 // send_uuid register your uuid to server
 // and then run recv_file_relay
 // get size first
-void send_file_relay (recv_uid, file_n, server_save_n) {
+void send_file_relay(recv_uid, file_n, server_save_n) {
   //Send dest uid
   send_string('DRL');
   // if (code -== int)
@@ -298,7 +289,4 @@ void send_file_relay (recv_uid, file_n, server_save_n) {
   //send file
   send_string(file_n);
   send_file();
-
-
-
 }
