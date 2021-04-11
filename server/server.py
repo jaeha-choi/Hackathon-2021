@@ -29,7 +29,7 @@ class Server:
         self.socket.listen()
         self.socket.settimeout(30)
 
-    def add(self, uid: uuid.UUID, pub_ip: str, priv_ip: str, port: int, priv_port: int):
+    def add(self, uid: uuid.UUID, pub_ip: str, port: int, priv_ip: str, priv_port: int):
         # Need mutex lock for multithreading
         mutex.acquire()
         try:
