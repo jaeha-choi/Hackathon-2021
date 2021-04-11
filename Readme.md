@@ -19,6 +19,7 @@ Github repo: https://github.com/jaeha-choi/Hackathon-2021
 - `PyQt==5.15.4`: Used for client GUI
 - `pyperclip==1.8.2`: Used for clipboard
 - `qdarkstyle==3.0.2`: Used for dark mode on desktop client
+- `xrange`: Used for cycling through list widget
 
 ## **GUI Requirements**
 
@@ -31,12 +32,18 @@ Github repo: https://github.com/jaeha-choi/Hackathon-2021
 A. Optional: Support dark mode + button to trigger it
 
 ### Desktop
-- A. Optional: Minimize to tray.
-- B. Optional: Drag and drop support
-- C. Optional: Key binding (aka shortcut) support
+- A. Optional: Drag and drop support
+- B. Optional: Key binding (aka shortcut) support
+
+<img width="450" alt="image" src="https://user-images.githubusercontent.com/62778661/114319673-50d15e80-9ac7-11eb-9c5b-f362d94b0036.png">
+
+
 
 ### Mobile
 1. "Photo picker" button: Picks images and videos by opening the gallery.
+
+![image](https://user-images.githubusercontent.com/62778661/114319773-c3423e80-9ac7-11eb-9803-71d2150f430b.png)
+
 
 ## **Functional Requirements**
 
