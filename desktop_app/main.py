@@ -17,7 +17,7 @@ class MyWindow(QMainWindow):
         self.setWindowTitle("Connect ME")
 
         # Establishes a Unique ID for the user
-        self.yourUniqueID = str(uuid.uuid4())  # User's unique ID
+        self.yourUniqueID = uuid.uuid4()  # User's unique ID
 
         # Window setup
         self.xpos = 1920 // 3
@@ -69,7 +69,7 @@ class MyWindow(QMainWindow):
 
         # Host Label Button: Copies to Clipboard
         self.hostLabelTextButton = QPushButton(self)
-        self.hostLabelTextButton.setText(self.yourUniqueID)
+        self.hostLabelTextButton.setText(str(self.yourUniqueID))
         self.hostLabelTextButton.clicked.connect(self.hostLabel)
 
         # Host Field Text-Box
@@ -126,7 +126,7 @@ class MyWindow(QMainWindow):
             self.listWidget.takeItem(self.listWidget.row(item))
 
     def hostLabel(self):
-        pyperclip.copy(self.yourUniqueID)
+        pyperclip.copy(str(self.yourUniqueID))
 
     def pickFiles(self):
         # Mac OS
