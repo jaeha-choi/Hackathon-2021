@@ -36,7 +36,8 @@ A. Optional: Support dark mode + button to trigger it
 - B. Optional: Drag and drop support
 - C. Optional: Key binding (aka shortcut) support
 
-<img width="400" alt="image" src="https://user-images.githubusercontent.com/62778661/114319405-48c4ef00-9ac6-11eb-88c9-0f2609928a5c.png">
+<img width="450" alt="image" src="https://user-images.githubusercontent.com/62778661/114319673-50d15e80-9ac7-11eb-9c5b-f362d94b0036.png">
+
 
 
 ### Mobile
