@@ -35,6 +35,9 @@ A. Optional: Support dark mode + button to trigger it
 - B. Optional: Drag and drop support
 - C. Optional: Key binding (aka shortcut) support
 
+<img width="847" alt="image" src="https://user-images.githubusercontent.com/62778661/114319405-48c4ef00-9ac6-11eb-88c9-0f2609928a5c.png">
+
+
 ### Mobile
 1. "Photo picker" button: Picks images and videos by opening the gallery.
 
