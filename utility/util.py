@@ -172,12 +172,7 @@ def recv_str(conn: socket.socket, encoding: str = "utf-8") -> (str, bool):
 
 def send_bin(conn: socket.socket, file_n: str, buff_size: int = 4096) -> bool:
     """
-    Send file as binary format. Could return error if folder
-    permission is incorrect, path does not exist, etc.
-    :param conn: Connection socket
-    :param file_n: File name to save as
-    :param buff_size: Size of a buffer
-    :return: True if successfully sent, False otherwise.
+
     """
     try:
         with open(file_n, "rb") as file:

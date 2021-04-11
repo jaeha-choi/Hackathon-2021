@@ -1,13 +1,10 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-
-import 'main.dart';
-
+import 'package:open_file/open_file.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 import 'dart:io';
 
 Socket socket;
@@ -68,13 +65,98 @@ bool passthrough(send_conn, recv_conn) {
     }
     // # Server sends length of bytes to expect to the receiver
     recv_conn.send_string(packet_size);
-    while (total_received < packet_size) {
-          // var packet = send_conn(packet_size - total_received);
-    }
-  }
 
+    while (total_received < packet_size) {
+          var packet = send_conn(packet_size - total_received);
+          if (packet == null ){
+            return false;
+          } else{
+            total_received += packet.length;
+            recv_conn.add(int32BigEndianBytes(packet_size));
+          }
+    }
+  } catch (error) {
+    print("Unknown error in passthrough");
+    return false;
+  }
+  return true;
 }
 
+ List recv_str(conn, text) {
+   /*
+    Receive text as string format. If packet is not being sent, raises exception.
+    :param conn: Connection socket
+    :param encoding: Encoding to use for string
+    :return: Tuple of received string and Boolean indicating the receive status.
+    */
+   String string = '';
+   try {
+     var packet_size = _get_pkt_size(conn);
+     if (packet_size == null) {
+       return [string, false];
+     }
+     else {
+       var data = _recv_n_byte(conn, packet_size);
+       string = utf8.decode(data);
+     }
+   } catch (error) {
+     print("Unknown error in recv_str");
+     return [string, false];
+   }
+   return [string, true];
+ }
+
+bool send_bin(conn, file_n, buff_size) {
+  /*
+    Send file as binary format. Could return error if folder
+    permission is incorrect, path does not exist, etc.
+    :param conn: Connection socket
+    :param file_n: File name to save as
+    :param buff_size: Size of a buffer
+    :return: True if successfully sent, False otherwise.
+
+   */
+  try{
+    var file = OpenFile.open(file_n);
+  }
+}
+
+
+Future<bool> recv_bin(RawSocket socket, file_name)async {
+  /*
+    Receive file as binary format
+    :param conn: Connection socket
+    :param file_n: File name to save as
+    :return: True if successfully received, False otherwise.
+    */
+
+  int packet_size = _get_pkt_size(socket);
+
+  if (packet_size = null) {
+    return false;
+  } else {
+    // TODO
+    File file = File(await getFilePath());
+    var data = _recv_n_byte(socket, packet_size);
+    file.writeAsBytes(data);
+    return true;
+  }
+}
+
+// Done with util.py
+
+Future send_string(String str) async {
+  /*
+     Function to receive String str
+     :para str: String variable
+     :return: Socket.add(size + bytes)
+    */
+  // switch string to bytes
+  var bytes = utf8.encode(str);
+  // switch len(var bytes) to binary and store to size
+  var size = int32BigEndianBytes(bytes.length);
+  socket.add(size + bytes);
+}
 
 void connects_to_socket() async {
   socket = await Socket.connect('143.198.234.58', 1234);
@@ -95,9 +177,11 @@ Future<String> getFilePath() async {
 // chang byte to long (64bits unsigned
 // Uint64List int8BigEndianBytes(var value) =>
 //     Uint64List(64)..buffer.asInt64List().setInt64(0, value, Endian.big);
-int int8bytes(Uint8List value) =>
-    // Uint64List(64)..buffer.asInt64List()[0] = value;
-
+int int8bytes(Uint8List value) {
+  var buffer = value.buffer;
+  var bdata = new ByteData.view(buffer);
+  return bdata.getUint32(0);
+}
 
 
 // change signed integer to binary
@@ -111,25 +195,8 @@ Future send_heart_beat() async {
   socket.add(size + bytes);
 }
 
-Future<bool> recv_bin(RawSocket socket, file_name)async {
-  /*
-    Receive file as binary format
-    :param conn: Connection socket
-    :param file_n: File name to save as
-    :return: True if successfully received, False otherwise.
-    */
 
-  Uint64List packet_size = _get_pkt_size(socket);
 
-  if (packet_size = null) {
-    return false;
-  } else {
-    File file = File(await getFilePath());
-    var data = _recv_n_byte(socket, packet_size);
-    file.writeAsBytes(data);
-    return true;
-  }
-}
 
 
 Future connect(){
@@ -139,18 +206,6 @@ Future connect(){
 }
 
 
-Future send_string(String str) async {
-  /*
-     Function to receive String str
-     :para str: String variable
-     :return: Socket.add(size + bytes)
-    */
-  // switch string to bytes
-  var bytes = utf8.encode(str);
-  // switch len(var bytes) to binary and store to size
-  var size = int32BigEndianBytes(bytes.length);
-  socket.add(size + bytes);
-}
 
 Future getFile() async {
   Directory tempDir = await getTemporaryDirectory();
