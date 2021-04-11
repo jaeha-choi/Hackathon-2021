@@ -237,7 +237,6 @@ class WorkerThreadReceive(QThread):
         self.client = parent.client
 
     def run(self):
-        print("clack")
         self.client.recv_file_relay()
 
 def window():

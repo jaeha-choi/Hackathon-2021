@@ -24,7 +24,6 @@ class Client:
         # self.conn.bind((self.SERVER, self.PORT))
         # TODO: Consider using UUIDv5
         self.uuid = uid
-        print(self.uuid)
 
     def _send_command(self, command: Command) -> bool:
         return util.send_str(self.server_conn, str(command))
