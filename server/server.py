@@ -1,7 +1,9 @@
 import logging as log
 import socket
+import threading
 import time
 import uuid
+from typing import Any
 
 from utility import util
 from utility.util import Command
@@ -9,6 +11,7 @@ from utility.util import ExitCode
 
 # Terminate connection if empty packet is being sent for TERMINATE_TH sec
 TERMINATE_TH = 30
+mutex = threading.Lock()
 log.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',
                 level=log.DEBUG, datefmt='%m/%d/%Y %I:%M:%S %p')
 
@@ -20,7 +23,6 @@ class Server:
         self.ip = ip
         self.port = port
         self.clients = {}  # uuid : (pub_ip, port, priv_ip, priv_port)
-        self.err_cnt = 0
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((self.ip, self.port))
@@ -28,7 +30,12 @@ class Server:
         self.socket.settimeout(30)
 
     def add(self, uid: uuid.UUID, pub_ip: str, priv_ip: str, port: int, priv_port: int):
-        self.clients[uid] = (pub_ip, port, priv_ip, priv_port)
+        # Need mutex lock for multithreading
+        mutex.acquire()
+        try:
+            self.clients[uid] = (pub_ip, port, priv_ip, priv_port)
+        finally:
+            mutex.release()
 
     def load_clients(self):
         pass
@@ -41,15 +48,15 @@ class Server:
     def close(self):
         self.socket.close()
 
-    def listen(self):
-        conn, addr = self.socket.accept()
-        while self.err_cnt <= TERMINATE_TH:
+    def _listen(self, conn: socket.socket, addr: Any) -> None:
+        err_cnt = 0
+        while err_cnt <= TERMINATE_TH:
             try:
                 command, res = util.recv_str(conn)
                 if not res:
                     # If empty packet is being sent
                     # or if there's an error
-                    self.err_cnt += 1
+                    err_cnt += 1
                     time.sleep(1)
                 else:
                     if command == str(Command.ADD):
@@ -69,8 +76,12 @@ class Server:
                         util.send_str(conn, "Closing connection.")
                         uid, _ = util.recv_str(conn)
                         conn.close()
-                        # Remove from online users
-                        del self.clients[uid]
+                        # Remove from online users.
+                        mutex.acquire()
+                        try:
+                            del self.clients[uid]
+                        finally:
+                            mutex.release()
                         log.debug("Clients:", self.clients)
                         log.info("EXIT command done")
                         break
@@ -111,15 +122,21 @@ class Server:
                         else:
                             # UUID not found in dict
                             pass
-                    self.err_cnt = 0
+                    err_cnt = 0
 
             except Exception as err1:
                 log.error("Unknown Error at listen", err1)
-        if self.err_cnt > TERMINATE_TH:
+        if err_cnt > TERMINATE_TH:
             # If error exceeds TERMINATE_TH threshold, close connection.
             conn.close()
-            self.err_cnt = 0
             log.warning("Closing connection due to timeout.")
+
+    def listen(self):
+        while True:
+            conn, addr = self.socket.accept()
+            thread = threading.Thread(target=self._listen, args=(conn, addr))
+            thread.start()
+            thread.join()
 
 
 if __name__ == '__main__':
