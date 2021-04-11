@@ -25,10 +25,6 @@ class Client:
         # TODO: Consider using UUIDv5
         self.uuid = uid
 
-        # TODO: DELETE THIS SHIZ
-        print("Test: DELETE AFTER")
-        print(self.uuid)
-
     def _send_command(self, command: Command) -> bool:
         return util.send_str(self.server_conn, str(command))
 

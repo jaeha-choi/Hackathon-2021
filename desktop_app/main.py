@@ -1,4 +1,3 @@
-import asyncio
 import atexit
 import sys
 import uuid
@@ -6,6 +5,7 @@ import uuid
 import pyperclip
 import qdarkstyle
 from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import *
 from pip._vendor.msgpack.fallback import xrange
 
@@ -18,7 +18,6 @@ RELAY_SERVER_PORT = 1234
 
 class MyWindow(QMainWindow):
     def __init__(self):
-
         super(MyWindow, self).__init__()
         self.setWindowTitle("Connect ME")
 
@@ -56,10 +55,8 @@ class MyWindow(QMainWindow):
 
         # END OF EXIT
 
-    async def initUI(self):
+    def initUI(self):
         layout = QVBoxLayout()
-
-        self.loop = asyncio.get_event_loop()
 
         # # Label Application Name
         # self.label = QtWidgets.QLabel(self)
@@ -72,8 +69,7 @@ class MyWindow(QMainWindow):
         # Delete File
         self.deleteFileButton = QPushButton(self)
         self.deleteFileButton.setText("Delete File(s)")
-        self.taskDelete = self.loop.create_task(self.removeSel)
-        self.deleteFileButton.clicked.connect(self.taskDelete)
+        self.deleteFileButton.clicked.connect(self.removeSel)
 
         # List of Files
         self.listWidget = QtWidgets.QListWidget()
@@ -88,8 +84,7 @@ class MyWindow(QMainWindow):
         # Host Label Button: Copies to Clipboard
         self.hostLabelTextButton = QPushButton(self)
         self.hostLabelTextButton.setText(str(self.yourUniqueID))
-        self.taskHostLabel = self.loop_create(self.hostLabel)
-        self.hostLabelTextButton.clicked.connect(self.taskHostLabel)
+        self.hostLabelTextButton.clicked.connect(self.hostLabel)
 
         # Host Field Text-Box
         self.hostFieldTextBox = QLineEdit(self)
@@ -99,28 +94,24 @@ class MyWindow(QMainWindow):
         self.pickFilesButton = QPushButton(self)
         self.pickFilesButton.setText("Pick Files")
         self.pickFilesButton.move(self.windowWidth // 2, self.windowHeight // 4)
-        self.taskPickFile = self.loop_create(self.pickFiles)
-        self.pickFilesButton.clicked.connect(self.taskPickFile)
+        self.pickFilesButton.clicked.connect(self.pickFiles)
 
         # Send Files Button
         # Will save the unique ID of the receiver when clicked as well
         self.sendFilesButton = QPushButton(self)
         self.sendFilesButton.setText("Send Files")
         self.sendFilesButton.move(self.windowWidth // 4, self.windowHeight // 4)
-        self.taskSendFile = self.loop.create_task(self.sendFiles)
-        self.sendFilesButton.clicked.connect(self.taskSendFile)
+        self.sendFilesButton.clicked.connect(self.sendFiles)
 
         # Share Clipboard Contents
         self.shareClipboardButton = QPushButton(self)
         self.shareClipboardButton.setText("Share Copied Text")
-        self.taskShareClip = self.loop.create_task(self.shareClipboard)
-        self.shareClipboardButton.clicked.connect(self.taskShareClip)
+        self.shareClipboardButton.clicked.connect(self.shareClipboard)
 
         # Dark Theme/Light Theme Button
         self.darkLightButton = QPushButton(self)
         self.darkLightButton.setText("Light")  # Light is set as default stylesheet mode
-        self.taskDarkLight = self.loop.create_task(self.darkLight)
-        self.darkLightButton.clicked.connect(self.taskDarkLight)
+        self.darkLightButton.clicked.connect(self.darkLight)
         # Used to switch between dark and light mode
         self._darkLight_flag = True
 
@@ -138,52 +129,33 @@ class MyWindow(QMainWindow):
         widget = QWidget()
         widget.setLayout(layout)
 
-        await asyncio.wait([self.taskHostLabel, self.taskDelete, self.taskPickFile, self.taskSendFile,
-                            self.taskDarkLight, self.taskShareClip])
-
         # Set the central widget of the Window. Widget will expand
         # to take up all the space in the window by default.
         self.setCentralWidget(widget)
 
-    async def removeSel(self):
+    def removeSel(self):
         listItems = self.listWidget.selectedItems()
         if not listItems: return
         for item in listItems:
             self.listWidget.takeItem(self.listWidget.row(item))
 
-    async def hostLabel(self):
+    def hostLabel(self):
         pyperclip.copy(str(self.yourUniqueID))
 
-    async def pickFiles(self):
+    def pickFiles(self):
         # Mac OS
         fname = QFileDialog.getOpenFileNames(self, "Open File", "/Users/admin")
         self.listWidget.addItems(fname[0])
 
-    async def sendFiles(self):
-        # Saves receiver's unique ID to a variable
-        # Gets Unique ID of Receiver
-        self.hostFieldValue = self.hostFieldTextBox.text()
-        print(self.hostFieldValue)
+    def sendFiles(self):
+        self.worker = WorkerThread(self)
+        self.worker.start()
+        self.worker.finished.connect(self.send_files_finished)
 
-        # SEND RECEIVER'S UNIQUE ID TO ESTABLISH SECURE CONNECTION
-        # self.client.uuid = self.hostFieldValue
-        # self.client.send_uuid()
+    def send_files_finished(self):
+        QMessageBox.information(self, "Done!", "Finished Sending Files!")
 
-        # Deals with saving and sending files
-        items = []
-
-        for index in xrange(self.listWidget.count()):
-            items.append(self.listWidget.item(index))
-
-        # Saves all the items as strings in the list in an array
-        filePaths = [i.text() for i in items]
-        fileNames = [j.split('/')[-1:][0] for j in filePaths]
-
-        # SEND FILES TO RECIPIENT
-        for filePath, fileName in zip(filePaths, fileNames):
-            self.client.send_file_relay(self.hostFieldValue, filePath, fileName)
-
-    async def shareClipboard(self):
+    def shareClipboard(self):
         # Gets Unique ID of Receiver
         self.hostFieldValue = self.hostFieldTextBox.text()
 
@@ -195,7 +167,7 @@ class MyWindow(QMainWindow):
         # Sends contents of clipboard to receiver as a String
         self.client.send_clip(self.hostFieldValue, str(self.clipboardContents))
 
-    async def darkLight(self):
+    def darkLight(self):
 
         if (self._darkLight_flag == True):
             self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
@@ -211,6 +183,37 @@ class MyWindow(QMainWindow):
 
     def exitFunctions(self):
         self.client.close()
+
+
+class WorkerThread(QThread):
+    def __init__(self, parent):
+        super(WorkerThread, self).__init__(parent)
+        # Saves receiver's unique ID to a variable
+        # Gets Unique ID of Receiver
+        self.hostFieldValue = parent.hostFieldTextBox.text()
+
+        self.listWidget = parent.listWidget
+        self.client = parent.client
+
+    update_progress = pyqtSignal(int)
+
+    def run(self):
+        print("Send Files Clicked Test")
+
+        # Deals with saving and sending files
+        items = []
+
+        for index in xrange(self.listWidget.count()):
+            items.append(self.listWidget.item(index))
+
+        # Saves all the items as strings in the list in an array
+        filePaths = [i.text() for i in items]
+        fileNames = [j.split('/')[-1:][0] for j in filePaths]
+
+        # SEND FILES TO RECIPIENT
+        for filePath, fileName in zip(filePaths, fileNames):
+            self.client.send_file_relay(self.hostFieldValue, filePath, fileName)
+            print("sent file")
 
 
 def window():
