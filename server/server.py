@@ -141,7 +141,10 @@ class Server:
                         if uid in self.clients:
                             util.send_str(conn, ExitCode.CONTINUE)
                             # UUID found in dict
+                            save_n, _ = util.recv_str(conn)
+
                             recv_conn = self.clients[uid][-1]  # (pub_ip, port, priv_ip, priv_port, conn)
+                            util.send_str(recv_conn, save_n)
                             data_relay(conn, recv_conn)
 
                         else:
