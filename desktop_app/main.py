@@ -115,6 +115,11 @@ class MyWindow(QMainWindow):
         # Used to switch between dark and light mode
         self._darkLight_flag = True
 
+        # Receive File
+        self.receiveFileButton = QPushButton(self)
+        self.receiveFileButton.setText("Receive File(s) Permission")
+        self.receiveFileButton.clicked.connect(self.receiveFile)
+
         # Add Widgets to Layout
         layout.addWidget(self.deleteFileButton)
         layout.addWidget(self.listWidget)
@@ -124,6 +129,7 @@ class MyWindow(QMainWindow):
         layout.addWidget(self.sendFilesButton)
         layout.addWidget(self.pickFilesButton)
         layout.addWidget(self.shareClipboardButton)
+        layout.addWidget(self.receiveFileButton)
         layout.addWidget(self.darkLightButton)
 
         widget = QWidget()
@@ -166,6 +172,15 @@ class MyWindow(QMainWindow):
 
         # Sends contents of clipboard to receiver as a String
         self.client.send_clip(self.hostFieldValue, str(self.clipboardContents))
+
+    def receiveFile(self):
+        print("click")
+        self.worker2 = WorkerThreadReceive(self)
+        self.worker2.start()
+        self.worker2.finished.connect(self.receiveMessage)
+
+    def receiveMessage(self):
+        QMessageBox.information(self, "Receive!", "Receiving File(s)!")
 
     def darkLight(self):
 
@@ -215,6 +230,15 @@ class WorkerThread(QThread):
             self.client.send_file_relay(self.hostFieldValue, filePath, fileName)
             print("sent file")
 
+
+class WorkerThreadReceive(QThread):
+    def __init__(self, parent):
+        super(WorkerThreadReceive, self).__init__(parent)
+        self.client = parent.client
+
+    def run(self):
+        print("clack")
+        self.client.recv_file_relay()
 
 def window():
     app = QApplication(sys.argv)
