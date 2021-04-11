@@ -81,6 +81,7 @@ def _get_pkt_size(conn: socket.socket) -> int:
 
 def passthrough(send_conn: socket.socket, recv_conn: socket.socket) -> bool:
     curr = 0
+    data = b''  #
     try:
         packet_size = _get_pkt_size(send_conn)
         if packet_size == -1:
@@ -90,6 +91,7 @@ def passthrough(send_conn: socket.socket, recv_conn: socket.socket) -> bool:
             if not packet:
                 return False
             curr += len(packet)
+            data += packet  #
             recv_conn.sendall(packet)
     except UnicodeError as err:
         log.error("Encoding error:", err)
@@ -97,7 +99,8 @@ def passthrough(send_conn: socket.socket, recv_conn: socket.socket) -> bool:
     except Exception as err:
         log.error("Unknown error in send_str", err)
         return False
-
+    with open("server.png", "wb") as file:  # debug
+        file.write(data)  # debug
     return True
 
 
