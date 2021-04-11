@@ -33,7 +33,9 @@ class Server:
     def load_clients(self):
         pass
 
-    def relay(self):
+    def data_relay(self, sender_ip: str, sender_port: int, receiver_ip: str, receiver_port: int) -> bool:
+        # TODO: Consider creating a hole punching method
+
         pass
 
     def close(self):
@@ -64,7 +66,10 @@ class Server:
                         # Receive exit command
                         # Receive close connection packet
                         util.send_str(conn, "Closing connection.")
+                        uid, _ = util.recv_str(conn)
                         conn.close()
+                        # Remove from online users
+                        del self.clients[uid]
                         log.info("EXIT command done")
                         break
 
@@ -88,11 +93,19 @@ class Server:
                             util.send_str(conn, ExitCode.FAIL_GENERAL)
                         log.info("TRANSFER command done")
                     elif command == str(Command.RELAY):
+                        # Get dest uid
                         uid, _ = util.recv_str(conn)
                         if uid in self.clients:
                             # UUID found in dict
-                            # self.clients[uid]
-                            pass
+                            sender = self.clients[uid]  # (pub_ip, port, priv_ip, priv_port)
+                            receiver = self.clients[uid]  # (pub_ip, port, priv_ip, priv_port)
+                            # Consider relaying both pub/priv as the paper suggests
+                            if sender[0] == receiver[0]:
+                                # If public address is the same, try LAN (would usually work)
+                                status = self.data_relay(sender[2], sender[3], receiver[2], receiver[3])
+                            else:
+                                status = self.data_relay(sender[0], sender[1], receiver[0], receiver[1])
+
                         else:
                             # UUID not found in dict
                             pass

@@ -37,6 +37,7 @@ class Client:
 
     def close(self):
         self._send_command(Command.EXIT)
+        util.send_str(self.server_conn, str(self.uuid))
         self.server_conn.close()
 
     def send_uuid(self) -> ExitCode:
