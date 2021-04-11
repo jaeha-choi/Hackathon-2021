@@ -46,7 +46,7 @@ class Client:
         # Send uuid
         util.send_str(self.server_conn, str(self.uuid))
 
-        info = str(self.server_conn.getsockname())
+        info = self.server_conn.getsockname()
         # Send priv_ip
         util.send_str(self.server_conn, info[0])
         # Send priv_port

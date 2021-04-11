@@ -65,8 +65,8 @@ class Server:
                         uid, _ = util.recv_str(conn)
                         # Receive private address and port
                         priv_addr, _ = util.recv_str(conn)
-                        priv_ip, _ = util.recv_str(conn)
-                        self.add(uid, addr[0], addr[1], priv_addr, int(priv_ip))  # ADD: Type check
+                        priv_port, _ = util.recv_str(conn)
+                        self.add(uid, addr[0], addr[1], priv_addr, int(priv_port))  # ADD: Type check
                         util.send_str(conn, ExitCode.SUCCESS)
                         log.debug("Clients: %s", self.clients.values())
                         log.info("ADD command done")
