@@ -45,8 +45,12 @@ class Client:
         self._send_command(Command.ADD)
         # Send uuid
         util.send_str(self.server_conn, str(self.uuid))
-        # Send (priv_ip, port)
-        util.send_str(self.server_conn, str(self.server_conn.getsockname()))
+
+        info = str(self.server_conn.getsockname())
+        # Send priv_ip
+        util.send_str(self.server_conn, info[0])
+        # Send priv_port
+        util.send_str(self.server_conn, str(info[1]))
         return self._get_result()
 
     def send_heartbeat(self) -> ExitCode:
