@@ -60,3 +60,8 @@ A. Optional: Support dark mode + button to trigger it
     - Private IP (could be unnecessary)
 ```
 2. Central Server: Transfer data via central server if hole punching was unsuccessful.
+
+## Contributors:
+- [Jaeha Choi](https://git.jaeha.dev/Jaeha.Choi) —— [Github](https://github.com/jaeha-choi)
+- [Robin Seo](https://github.com/seo-chang)
+- [Nicolas Feuchster](https://github.com/nicolasthedev)
