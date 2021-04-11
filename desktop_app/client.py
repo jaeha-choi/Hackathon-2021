@@ -1,3 +1,4 @@
+import asyncio
 import socket
 import uuid
 
@@ -16,6 +17,7 @@ class Client:
         # p2p connection
         self.client_ip = ""
         self.client_port = 1234
+        self.keepalive_inter = 30
         self.client_conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.conn.settimeout(5)
         # self.conn.bind((self.SERVER, self.PORT))
@@ -27,6 +29,11 @@ class Client:
 
     def _get_result(self) -> ExitCode:
         return ExitCode(int(util.recv_str(self.server_conn)[0]))
+
+    async def _keepalive(self) -> None:
+        while True:
+            await asyncio.sleep(self.keepalive_inter)
+            self.send_heartbeat()
 
     def connect(self) -> ExitCode:
         # self.socket.listen()
@@ -58,6 +65,9 @@ class Client:
         # util.send_str(self.conn, "Keep-alive")
         return self._get_result()
 
+    def keepalive(self) -> None:
+        asyncio.create_task(self._keepalive())
+
     def send_clip(self, recv_uid: str, content: str) -> ExitCode:
         pass
 
@@ -83,7 +93,4 @@ if __name__ == '__main__':
     client = Client('', 1234)
     client.connect()
     client.send_uuid()
-    # util.exec_res(client.send_file, ("./test/cat.png", "dog.png"))
-    # util.exec_res(client.send_file, ("./test/cat2.JPG", "stars.JPG"))
-    # util.exec_res(client.send_heartbeat)
-    # client.close()
+    client.close()
