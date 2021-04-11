@@ -67,7 +67,7 @@ class Server:
                         priv_addr, _ = util.recv_str(conn)
                         self.add(uid, addr[0], addr[1], priv_addr[0], priv_addr[1])
                         util.send_str(conn, ExitCode.SUCCESS)
-                        log.debug("Clients:", self.clients.values())
+                        log.debug("Clients:", str(self.clients.values()))
                         log.info("ADD command done")
 
                     elif command == str(Command.EXIT):
@@ -82,7 +82,7 @@ class Server:
                             del self.clients[uid]
                         finally:
                             mutex.release()
-                        log.debug("Clients:", self.clients.values())
+                        log.debug("Clients:", str(self.clients.values()))
                         log.info("EXIT command done")
                         break
 
@@ -136,7 +136,10 @@ class Server:
 
     def listen(self):
         while True:
-            conn, addr = self.socket.accept()
+            try:
+                conn, addr = self.socket.accept()
+            except socket.timeout:
+                continue
             thread = threading.Thread(target=self._listen, args=(conn, addr))
             thread.start()
 
