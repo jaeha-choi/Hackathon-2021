@@ -40,7 +40,7 @@ A. Optional: Support dark mode + button to trigger it
 
 
 ### Mobile
-1. "Photo picker" button: Picks images and videos by opening the gallery.
+1. "Select Images" button: Picks images and videos by opening the gallery.
 
 ![image](https://user-images.githubusercontent.com/62778661/114320281-14533200-9aca-11eb-9d50-00c8d25a81da.png)
 
