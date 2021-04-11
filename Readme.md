@@ -61,6 +61,11 @@ A. Optional: Support dark mode + button to trigger it
 ```
 2. Central Server: Transfer data via central server if hole punching was unsuccessful.
 
+## Future Work:
+- Fix mobile application
+- Add a connection box for Desktop
+- Fix button layout for Desktop
+
 ## Contributors:
 - [Jaeha Choi](https://git.jaeha.dev/Jaeha.Choi) —— [Github](https://github.com/jaeha-choi)
 - [Robin Seo](https://github.com/seo-chang)
