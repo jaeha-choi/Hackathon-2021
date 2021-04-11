@@ -136,7 +136,6 @@ class Server:
             conn, addr = self.socket.accept()
             thread = threading.Thread(target=self._listen, args=(conn, addr))
             thread.start()
-            thread.join()
 
 
 if __name__ == '__main__':

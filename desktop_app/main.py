@@ -8,7 +8,7 @@ from pip._vendor.msgpack.fallback import xrange
 
 import desktop_app.client as cl
 
-RELAY_SERVER_IP = ""
+RELAY_SERVER_IP = "143.198.234.58"
 RELAY_SERVER_PORT = 1234
 
 
@@ -40,6 +40,7 @@ class MyWindow(QMainWindow):
 
         self.client = cl.Client(RELAY_SERVER_IP, RELAY_SERVER_PORT)
         self.client.connect()
+        self.client.send_uuid()
 
         # END OF CLIENT RECIEVER SETUP
 
@@ -141,8 +142,8 @@ class MyWindow(QMainWindow):
         print(self.hostFieldValue)
 
         # SEND RECEIVER'S UNIQUE ID TO ESTABLISH SECURE CONNECTION
-        self.client.uuid = self.hostFieldValue
-        self.client.send_uuid()
+        # self.client.uuid = self.hostFieldValue
+        # self.client.send_uuid()
 
         # Deals with saving and sending files
         items = []
