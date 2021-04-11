@@ -225,10 +225,11 @@ class WorkerThread(QThread):
         filePaths = [i.text() for i in items]
         fileNames = [j.split('/')[-1:][0] for j in filePaths]
 
-        # SEND FILES TO RECIPIENT
-        for filePath, fileName in zip(filePaths, fileNames):
-            self.client.send_file_relay(self.hostFieldValue, filePath, fileName)
-            print("sent file")
+        self.client.send_file_relay(self.hostFieldValue, filePaths, fileNames)
+        # # SEND FILES TO RECIPIENT
+        # for filePath, fileName in zip(filePaths, fileNames):
+        #     self.client.send_file_relay(self.hostFieldValue, filePath, fileName)
+        #     print("sent file")
 
 
 class WorkerThreadReceive(QThread):
