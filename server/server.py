@@ -60,6 +60,7 @@ class Server:
                         priv_addr, _ = util.recv_str(conn)
                         self.add(uid, addr[0], addr[1], priv_addr[0], priv_addr[1])
                         util.send_str(conn, ExitCode.SUCCESS)
+                        log.debug("Clients:", self.clients)
                         log.info("ADD command done")
 
                     elif command == str(Command.EXIT):
@@ -70,6 +71,7 @@ class Server:
                         conn.close()
                         # Remove from online users
                         del self.clients[uid]
+                        log.debug("Clients:", self.clients)
                         log.info("EXIT command done")
                         break
 
