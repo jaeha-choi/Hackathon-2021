@@ -1,5 +1,4 @@
 import sys
-import uuid
 
 import pyperclip
 import qdarkstyle
@@ -8,6 +7,9 @@ from PyQt5.QtWidgets import *
 from pip._vendor.msgpack.fallback import xrange
 
 import desktop_app.client as cl
+
+RELAY_SERVER_IP = ""
+RELAY_SERVER_PORT = 1234
 
 
 class MyWindow(QMainWindow):
@@ -36,7 +38,7 @@ class MyWindow(QMainWindow):
 
         # SETUP CONNECTION
 
-        self.client = cl.Client('', 1234)
+        self.client = cl.Client(RELAY_SERVER_IP, RELAY_SERVER_PORT)
         self.client.connect()
 
         # END OF CLIENT RECIEVER SETUP
