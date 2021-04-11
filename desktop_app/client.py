@@ -97,7 +97,8 @@ class Client:
         return self._get_result()
 
     def recv_file_relay(self) -> ExitCode:
-        util.recv_bin(self.server_conn, "received.png")
+        name, _ = util.recv_str(self.server_conn)
+        util.recv_bin(self.server_conn, name)
         return self._get_result()
 
     def recv_file(self):
@@ -108,9 +109,8 @@ class Client:
 
 
 if __name__ == '__main__':
-    client = Client('', 1234)
+    client = Client('143.198.234.58', 1234)
     client.connect()
-    client.uuid = str("0000")
     client.send_uuid()
-    client.recv_file_relay()
+    # client.recv_file_relay()
     client.close()

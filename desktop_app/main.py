@@ -23,7 +23,7 @@ class MyWindow(QMainWindow):
 
         # Establishes a Unique ID for the user
         self.yourUniqueID = uuid.uuid4()  # User's unique ID
-        self.yourUniqueID = "0000"  # User's unique ID
+        # self.yourUniqueID = "0000"  # User's unique ID
 
         # Window setup
         self.xpos = 1920 // 3
