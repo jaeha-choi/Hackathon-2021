@@ -6,11 +6,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import "dart:typed_data";
-
+import 'util.dart';
 void main() {
   runApp(MyApp());
 }
-
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
@@ -112,17 +111,21 @@ class _FrontPageState extends State<FrontPage> {
 }
 
 class LoadingPage extends StatefulWidget {
-  // initialize (send packet)
   @override
   State<StatefulWidget> createState() => _LoadingPageState();
 }
 
 class _LoadingPageState extends State<LoadingPage> {
-  // pick file
   Socket socket;
   String tempPath;
   List<File> files;
   final myController = TextEditingController();
+
+  // getting Uuid ();
+  String getUuid() {
+    var uuid = Uuid();
+    return uuid.v4();
+  }
 
   void connects_to_socket() async {
     socket = await Socket.connect('143.198.234.58', 1234);
@@ -165,9 +168,7 @@ class _LoadingPageState extends State<LoadingPage> {
   //   });
   // }
 
-  // send string TRF
-  // Send filename as a string (robin.jpg)
-  // send image file
+  // change integer to binary
   Uint8List int32BigEndianBytes(int value) =>
       Uint8List(4)..buffer.asByteData().setInt32(0, value, Endian.big);
 
@@ -176,11 +177,15 @@ class _LoadingPageState extends State<LoadingPage> {
     var bytes = utf8.encode('HRB');
     var size = int32BigEndianBytes(bytes.length);
     print(size + bytes);
-    print(socket);
-    socket.add(size + bytes); // "TRF"-> byte
+    socket.add(size + bytes);
   }
 
   Future send_string(String str) async {
+    /*
+     Function to receive String str
+     :para str: String variable
+     :return: Socket.add(size + bytes)
+    */
     // switch string to bytes
     var bytes = utf8.encode(str);
     // switch len(var bytes) to binary and store to size
@@ -194,32 +199,27 @@ class _LoadingPageState extends State<LoadingPage> {
      */
     connects_to_socket();
     print(socket);
-      print('connected');
-      //listen to the received data event stream
-      socket.listen((List<int> event) {
-        print(utf8.decode(event));
-      });
+    print('connected');
+    //listen to the received data event stream
+    socket.listen((List<int> event) {
+      print(utf8.decode(event));
+    });
 
-      // send picture
-      // convert 3 to bytes take string trf convert to bytes and append in addhere
-      //   find len(TRF) convert to byte
-      for (var i = 0; i < files.length; i++) {
-        send_string('TRF');
-        String file_n = files[i].toString();
-        send_string(file_n.substring(file_n.lastIndexOf('/') + 1, file_n.length - 1));
-        var image = files[i].readAsBytesSync();
-        var size = image.length;
-        socket.add(int32BigEndianBytes(size) + image);
-        // data = await send_string(files[i].radAsBytesSync());
-        // print(data.length);
-        // socket.add(data);
-        // wait 5 seconds
-        await Future.delayed(Duration(seconds: 5));
-      }
-      // .. and close the socket
-    // socket.close();
+    // send picture
+    // convert 3 to bytes take string trf convert to bytes and append in addhere
+    //   find len(TRF) convert to byte
+    for (var i = 0; i < files.length; i++) {
+      send_string('TRF');
+      String fileName = files[i].toString();
+      send_string(fileName.substring(fileName.lastIndexOf('/') + 1, fileName.length - 1));
+      var image = files[i].readAsBytesSync();
+      var size = image.length;
+      socket.add(int32BigEndianBytes(size) + image);
+      //    size of image(BINARY) and image(BINARY)
+      // wait 5 seconds
+      await Future.delayed(Duration(seconds: 5));
+    }
   }
-
 
   // void _incrementCounter() {
   //   setState(() {
@@ -263,10 +263,9 @@ class _LoadingPageState extends State<LoadingPage> {
                   itemCount: itemCount,
                   itemBuilder: (BuildContext context, int index) {
                     return ListTile(
-                      title: Text(files[index]
-                          .toString()
-                          .substring(files[index].toString().lastIndexOf('/') + 1)),
-                    );
+                        title: Text(files[index].toString().substring(
+                            files[index].toString().lastIndexOf('/') + 1,
+                            files[index].toString().length - 1)));
                   },
                 )
               : Center(child: const Text('No items')),
@@ -282,9 +281,7 @@ class _LoadingPageState extends State<LoadingPage> {
               SizedBox(
                 width: 150.0,
                 height: 70.0,
-
                 child: TextField(
-                  // controller: _textEditingController,
                   controller: myController,
                   obscureText: false,
                   decoration: InputDecoration(
@@ -297,11 +294,6 @@ class _LoadingPageState extends State<LoadingPage> {
                     labelStyle: TextStyle(color: Colors.white.withOpacity(0.8)),
                   ),
                 ),
-
-                // Text(host_field.text)
-                //   decoration: InputDecoration(
-                //       border: OutlineInputBorder(), labelText: 'Enter Host Field'),
-                // )
               )
             ],
           )),
@@ -338,10 +330,5 @@ class _LoadingPageState extends State<LoadingPage> {
         ],
       ),
     );
-  }
-
-  String getUuid() {
-    var uuid = Uuid();
-    return uuid.v4();
   }
 }
