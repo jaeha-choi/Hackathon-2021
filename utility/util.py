@@ -15,6 +15,7 @@ class Command(Enum):
     HEARTBEAT = "HRB"
     TRANSFER = "TRF"
     RELAY = "REL"
+    DATA_RELAY = "DRL"
 
 
 class ExitCode(Enum):
@@ -68,6 +69,36 @@ def _recv_n_byte(conn: socket.socket, packet_size: int):
     return data
 
 
+def _get_pkt_size(conn: socket.socket) -> int:
+    # Receive first four bytes
+    b_pkt_len = _recv_n_byte(conn, 4)
+    if b_pkt_len is None:
+        return -1
+    # convert byte to unsigned long
+    return struct.unpack('!L', b_pkt_len)[0]
+
+
+def passthrough(send_conn: socket.socket, recv_conn: socket.socket) -> bool:
+    curr = 0
+    try:
+        packet_size = _get_pkt_size(send_conn)
+        if packet_size == -1:
+            return False
+        while curr < packet_size:
+            packet = send_conn.recv(packet_size - curr)
+            if not packet:
+                return False
+            recv_conn.sendall(packet)
+    except UnicodeError as err:
+        log.error("Encoding error:", err)
+        return False
+    except Exception as err:
+        log.error("Unknown error in send_str", err)
+        return False
+
+    return True
+
+
 def send_str(conn: socket.socket, msg: Any, encoding: str = "utf-8") -> bool:
     """
     Send text as string format
@@ -105,17 +136,10 @@ def recv_str(conn: socket.socket, encoding: str = "utf-8") -> (str, bool):
     """
     string = ""
     try:
-        # Check first four bytes for total packet size
-        pkg_len = _recv_n_byte(conn, 4)
-        if pkg_len is None:
+        packet_size = _get_pkt_size(conn)
+        if packet_size == -1:
             return string, False
-        # This is inefficient as the size can get big very fast
-        # end_idx = data.find(b']')
-        # pkg_len = int(data[:pkg_len])
-
-        # convert byte to unsigned long
-        packet_size = struct.unpack('!L', pkg_len)[0]
-        # print("recv_str:\tPacket size:", packet_size)  # Debug
+        # log.debug("recv_str:\tPacket size:", packet_size)
         data = _recv_n_byte(conn, packet_size)
         string = data.decode(encoding)
     except UnicodeError as err:
@@ -140,7 +164,7 @@ def send_bin(conn: socket.socket, file_n: str, buff_size: int = 4096) -> bool:
     try:
         with open(file_n, "rb") as file:
             b_msg = struct.pack('!L', os.path.getsize(file_n))
-            # print("send_bin:\tPacket size:", os.path.getsize(file_n))  # Debug
+            # log.debug("send_bin:\tPacket size:", os.path.getsize(file_n))
             conn.send(b_msg)
             while True:
                 bytes_read = file.read(buff_size)
@@ -170,9 +194,10 @@ def recv_bin(conn: socket.socket, file_n: str) -> bool:
     :return: True if successfully received, False otherwise.
     """
     try:
-        pkg_len = _recv_n_byte(conn, 4)
-        packet_size = struct.unpack('!L', pkg_len)[0]
-        # print("recv_bin:\tPacket size:", packet_size)  # Debug
+        packet_size = _get_pkt_size(conn)
+        if packet_size == -1:
+            return False
+        # log.debug("recv_bin:\tPacket size:", packet_size)
         with open(file_n, "wb") as file:
             data = _recv_n_byte(conn, packet_size)
             file.write(data)
