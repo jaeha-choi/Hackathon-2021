@@ -7,18 +7,17 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import *
 from pip._vendor.msgpack.fallback import xrange
 
-try:
-    # Python2
-    import Tkinter as tk
-except ImportError:
-    # Python3
-    import tkinter as tk
+import desktop_app.client as cl
 
 
 class MyWindow(QMainWindow):
     def __init__(self):
+
         super(MyWindow, self).__init__()
         self.setWindowTitle("Connect ME")
+
+        # Establishes a Unique ID for the user
+        self.yourUniqueID = str(uuid.uuid4())  # User's unique ID
 
         # Window setup
         self.xpos = 1920 // 3
@@ -34,6 +33,13 @@ class MyWindow(QMainWindow):
         self.setGeometry(self.xpos, self.ypos, self.windowWidth, self.windowHeight)
         # self.setWindowTitle("Connect ME")
         self.initUI()
+
+        # SETUP CONNECTION
+
+        self.client = cl.Client('', 1234)
+        self.client.connect()
+
+        # END OF CLIENT RECIEVER SETUP
 
     def initUI(self):
         layout = QVBoxLayout()
@@ -58,13 +64,12 @@ class MyWindow(QMainWindow):
         self.listWidget.move(50, 500)
 
         # Host Label Text
-        self.yourUniqueID = QLabel(self)
-        self.yourUniqueID.setText("Your Unique ID:")
+        self.yourUniqueIDLabel = QLabel(self)
+        self.yourUniqueIDLabel.setText("Your Unique ID:")
 
         # Host Label Button: Copies to Clipboard
         self.hostLabelTextButton = QPushButton(self)
-        self.uniqueID = str(uuid.uuid4())  # User's unique ID
-        self.hostLabelTextButton.setText(self.uniqueID)
+        self.hostLabelTextButton.setText(self.yourUniqueID)
         self.hostLabelTextButton.clicked.connect(self.hostLabel)
 
         # Host Field Text-Box
@@ -99,7 +104,7 @@ class MyWindow(QMainWindow):
         # Add Widgets to Layout
         layout.addWidget(self.deleteFileButton)
         layout.addWidget(self.listWidget)
-        layout.addWidget(self.yourUniqueID)
+        layout.addWidget(self.yourUniqueIDLabel)
         layout.addWidget(self.hostLabelTextButton)
         layout.addWidget(self.hostFieldTextBox)
         layout.addWidget(self.sendFilesButton)
@@ -121,7 +126,7 @@ class MyWindow(QMainWindow):
             self.listWidget.takeItem(self.listWidget.row(item))
 
     def hostLabel(self):
-        pyperclip.copy(self.uniqueID)
+        pyperclip.copy(self.yourUniqueID)
 
     def pickFiles(self):
         # Mac OS
@@ -129,20 +134,28 @@ class MyWindow(QMainWindow):
         self.listWidget.addItems(fname[0])
 
     def sendFiles(self):
-        print("Send These Files")
+        # Saves receiver's unique ID to a variable
+        self.hostFieldValue = self.hostFieldTextBox.text()
+        print(self.hostFieldValue)
+
+        # SEND RECEIVER'S UNIQUE ID TO ESTABLISH SECURE CONNECTION
+        self.client.uuid = self.hostFieldValue
+        self.client.send_uuid()
+
+        # Deals with saving and sending files
         items = []
 
         for index in xrange(self.listWidget.count()):
             items.append(self.listWidget.item(index))
 
         # Saves all the items as strings in the list in an array
-        labels = [i.text() for i in items]
+        filePaths = [i.text() for i in items]
+        fileNames = [j.split('/')[-1:][0] for j in filePaths]
 
-        print(labels)
+        # SEND FILES TO RECIPIENT
+        for filePath, fileName in zip(filePaths, fileNames):
+            self.client.send_file(filePath, fileName)
 
-        # Saves receiver's unique ID to a variable
-        self.hostFieldValue = self.hostFieldTextBox.text()
-        print(self.hostFieldValue)
 
     def shareClipboard(self):
         clipboardContents = pyperclip.paste()
