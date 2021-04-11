@@ -16,33 +16,44 @@ log.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',
                 level=log.DEBUG, datefmt='%m/%d/%Y %I:%M:%S %p')
 
 
+def data_relay(send_conn, recv_conn):
+    if util.passthrough(send_conn, recv_conn):
+        log.error("File sent.")
+        util.send_str(send_conn, ExitCode.SUCCESS)
+        util.send_str(recv_conn, ExitCode.SUCCESS)
+    else:
+        log.error("File not sent.")
+        util.send_str(send_conn, ExitCode.FAIL_GENERAL)
+        util.send_str(recv_conn, ExitCode.FAIL_GENERAL)
+    log.info("DATA_RELAY command done")
+
+
 class Server:
 
     def __init__(self, ip: str, port: int):
         # TODO: Validate IP addr/port
         self.ip = ip
         self.port = port
-        self.clients = {}  # uuid : (pub_ip, port, priv_ip, priv_port)
+        self.clients = {}  # uuid : (pub_ip, port, priv_ip, priv_port, conn)
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((self.ip, self.port))
         self.socket.listen()
         self.socket.settimeout(30)
 
-    def add(self, uid: uuid.UUID, pub_ip: str, port: int, priv_ip: str, priv_port: int):
+    def add(self, uid: uuid.UUID, pub_ip: str, port: int, priv_ip: str, priv_port: int, conn: socket.socket):
         # Need mutex lock for multithreading
         mutex.acquire()
         try:
-            self.clients[uid] = (pub_ip, port, priv_ip, priv_port)
+            self.clients[uid] = (pub_ip, port, priv_ip, priv_port, conn)
         finally:
             mutex.release()
 
     def load_clients(self):
         pass
 
-    def data_relay(self, sender_ip: str, sender_port: int, receiver_ip: str, receiver_port: int) -> bool:
+    def relay(self, sender_ip: str, sender_port: int, receiver_ip: str, receiver_port: int) -> bool:
         # TODO: Consider creating a hole punching method
-
         pass
 
     def close(self):
@@ -66,7 +77,7 @@ class Server:
                         # Receive private address and port
                         priv_addr, _ = util.recv_str(conn)
                         priv_port, _ = util.recv_str(conn)
-                        self.add(uid, addr[0], addr[1], priv_addr, int(priv_port))  # ADD: Type check
+                        self.add(uid, addr[0], addr[1], priv_addr, int(priv_port), conn)  # ADD: Type check
                         util.send_str(conn, ExitCode.SUCCESS)
                         log.debug("Clients: %s", self.clients.values())
                         log.info("ADD command done")
@@ -107,22 +118,35 @@ class Server:
                             util.send_str(conn, ExitCode.FAIL_GENERAL)
                         log.info("TRANSFER command done")
                     elif command == str(Command.RELAY):
+                        # # Get dest uid
+                        # uid, _ = util.recv_str(conn)
+                        # if uid in self.clients:
+                        #     # UUID found in dict
+                        #     sender = self.clients[uid]  # (pub_ip, port, priv_ip, priv_port)
+                        #     receiver = self.clients[uid]  # (pub_ip, port, priv_ip, priv_port)
+                        #     # Consider relaying both pub/priv as the paper suggests
+                        #     if sender[0] == receiver[0]:
+                        #         # If public address is the same, try LAN (would usually work)
+                        #         status = self.data_relay(sender[2], sender[3], receiver[2], receiver[3])
+                        #     else:
+                        #         status = self.data_relay(sender[0], sender[1], receiver[0], receiver[1])
+                        #
+                        # else:
+                        #     # UUID not found in dict
+                        #     pass
+                        pass
+                    elif command == str(Command.DATA_RELAY):
                         # Get dest uid
                         uid, _ = util.recv_str(conn)
                         if uid in self.clients:
+                            util.send_str(conn, ExitCode.CONTINUE)
                             # UUID found in dict
-                            sender = self.clients[uid]  # (pub_ip, port, priv_ip, priv_port)
-                            receiver = self.clients[uid]  # (pub_ip, port, priv_ip, priv_port)
-                            # Consider relaying both pub/priv as the paper suggests
-                            if sender[0] == receiver[0]:
-                                # If public address is the same, try LAN (would usually work)
-                                status = self.data_relay(sender[2], sender[3], receiver[2], receiver[3])
-                            else:
-                                status = self.data_relay(sender[0], sender[1], receiver[0], receiver[1])
+                            recv_conn = self.clients[uid][-1]  # (pub_ip, port, priv_ip, priv_port, conn)
+                            data_relay(conn, recv_conn)
 
                         else:
+                            util.send_str(conn, ExitCode.NO_UUID_MATCH)
                             # UUID not found in dict
-                            pass
                     err_cnt = 0
 
             except ConnectionResetError:

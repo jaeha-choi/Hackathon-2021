@@ -72,7 +72,21 @@ class Client:
         pass
 
     def send_file_relay(self, recv_uid: str, file_n: str, server_save_n: str) -> ExitCode:
-        pass
+        self._send_command(Command.DATA_RELAY)
+        # Send dest uid
+        util.send_str(self.server_conn, recv_uid)
+        code = self._get_result()
+        if code == ExitCode.CONTINUE:
+            print("Receiver UUID found.")
+            # Send file name to use for saving on server-side
+            util.send_str(self.server_conn, server_save_n)
+            # Send file
+            util.send_bin(self.server_conn, file_n)
+            code = self._get_result()
+        elif code == ExitCode.NO_UUID_MATCH:
+            print("Receiver UUID NOT found.")
+
+        return code
 
     def send_file(self, file_n: str, server_save_n: str) -> ExitCode:
         self._send_command(Command.TRANSFER)
@@ -82,7 +96,11 @@ class Client:
         util.send_bin(self.server_conn, file_n)
         return self._get_result()
 
-    def recv_data(self):
+    def recv_file_relay(self) -> ExitCode:
+        util.recv_bin(self.server_conn, "received.png")
+        return self._get_result()
+
+    def recv_file(self):
         pass
 
     def get_user(self, uid: str):
@@ -92,5 +110,7 @@ class Client:
 if __name__ == '__main__':
     client = Client('', 1234)
     client.connect()
+    client.uuid = str("0000")
     client.send_uuid()
+    client.recv_file_relay()
     client.close()

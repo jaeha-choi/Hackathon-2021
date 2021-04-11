@@ -10,8 +10,8 @@ from pip._vendor.msgpack.fallback import xrange
 
 import desktop_app.client as cl
 
-# RELAY_SERVER_IP = "143.198.234.58"
-RELAY_SERVER_IP = ""
+RELAY_SERVER_IP = "143.198.234.58"
+# RELAY_SERVER_IP = ""
 RELAY_SERVER_PORT = 1234
 
 
@@ -23,6 +23,7 @@ class MyWindow(QMainWindow):
 
         # Establishes a Unique ID for the user
         self.yourUniqueID = uuid.uuid4()  # User's unique ID
+        self.yourUniqueID = "0000"  # User's unique ID
 
         # Window setup
         self.xpos = 1920 // 3
@@ -153,8 +154,8 @@ class MyWindow(QMainWindow):
         print(self.hostFieldValue)
 
         # SEND RECEIVER'S UNIQUE ID TO ESTABLISH SECURE CONNECTION
-        self.client.uuid = self.hostFieldValue
-        self.client.send_uuid()
+        # self.client.uuid = self.hostFieldValue
+        # self.client.send_uuid()
 
         # Deals with saving and sending files
         items = []
@@ -168,7 +169,7 @@ class MyWindow(QMainWindow):
 
         # SEND FILES TO RECIPIENT
         for filePath, fileName in zip(filePaths, fileNames):
-            self.client.send_file(filePath, fileName)
+            self.client.send_file_relay(self.hostFieldValue, filePath, fileName)
 
     def shareClipboard(self):
         # Gets Unique ID of Receiver
@@ -181,7 +182,6 @@ class MyWindow(QMainWindow):
 
         # Sends contents of clipboard to receiver as a String
         self.client.send_clip(self.hostFieldValue, str(self.clipboardContents))
-
 
     def darkLight(self):
 
@@ -206,7 +206,6 @@ def window():
     win = MyWindow()
     win.show()
     sys.exit(app.exec_())
-
 
 
 window()

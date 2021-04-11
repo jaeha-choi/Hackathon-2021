@@ -24,7 +24,8 @@ class ExitCode(Enum):
 
     SUCCESS = 0
     FAIL_GENERAL = 1
-
+    CONTINUE = 2
+    NO_UUID_MATCH = 3
 
 # def exec_res(function: Callable, *args: tuple[Any, ...]) -> None:
 #     res = function(args[0][0], args[0][1]) if len(args) else function()
