@@ -266,14 +266,14 @@ class _LoadingPageState extends State<LoadingPage> {
     print(socket);
     print('connected');
 
-    List<String> serverSaveNames;
+    List<String> serverSaveNames = [];
     String localName;
     for (int i = 0; i < files.length; i++) {
       localName = files[i].path;
       serverSaveNames.add(localName.substring(
           localName.lastIndexOf('/') + 1, localName.length - 1));
     }
-    sendFileRelay(socket, uid, files, serverSaveNames);
+    sendFileRelay(socket, myController.text, files, serverSaveNames);
   }
 
   // void _incrementCounter() {
