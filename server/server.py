@@ -124,9 +124,14 @@ class Server:
                             # UUID not found in dict
                             pass
                     err_cnt = 0
+
             except ConnectionResetError:
                 conn.close()
                 log.warning("Closing connection closed by peer.")
+
+            except KeyboardInterrupt:
+                conn.close()
+                log.error("Keyboard Interrupt")
 
             except Exception as err1:
                 log.error("Unknown Error at listen", err1)
@@ -147,8 +152,4 @@ class Server:
 
 if __name__ == '__main__':
     serv = Server("", 1234)
-    try:
-        serv.listen()
-    except KeyboardInterrupt:
-        log.error("Keyboard Interrupt")
-        serv.close()
+    serv.listen()
