@@ -1,15 +1,19 @@
 import 'dart:io';
 import 'dart:convert';
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import "dart:typed_data";
 import 'util.dart';
+
 void main() {
   runApp(MyApp());
 }
+
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
@@ -69,44 +73,46 @@ class _FrontPageState extends State<FrontPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('First Route'),
+        body: Center(
+            child: Container(
+      constraints: BoxConstraints.expand(),
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage("images/spacex.jpg"),
+          fit: BoxFit.cover,
+        ),
       ),
-      body: Column(children: <Widget>[
-        Spacer(),
-        Center(
-            child: Text(
-          'connect_ME',
-          style: TextStyle(fontSize: 45),
-        )),
-        Spacer(),
-        ElevatedButton(
-          child: Text(
-            "Select Files to Send",
-            style: TextStyle(fontSize: 30),
+      child: Column(
+        children: <Widget>[
+          Spacer(),
+          Text(
+            'connect_ME',
+            style: TextStyle(fontSize: 45),
           ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => LoadingPage()),
-            );
-          },
-        ),
-        ElevatedButton(
-          child: Text(
-            "Select to receive files",
-            style: TextStyle(fontSize: 30),
-          ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => LoadingPage()),
-            );
-          },
-        ),
-        Spacer(),
-      ]),
-    );
+          Spacer(),
+          Spacer(),
+          Spacer(),
+          OutlinedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoadingPage()),
+                );
+              },
+              child: Text(
+                "🚀  Send Files",
+                style: TextStyle(fontSize: 20),
+              )),
+          OutlinedButton(
+              onPressed: null,
+              child: Text(
+                "📋  Send Clipboard",
+                style: TextStyle(fontSize: 20),
+              )),
+          Spacer(),
+        ],
+      ),
+    )));
   }
 }
 
@@ -116,12 +122,57 @@ class LoadingPage extends StatefulWidget {
 }
 
 class _LoadingPageState extends State<LoadingPage> {
-   // socket;
+  Socket socket;
+  String tempPath;
+  List<File> files;
+  var uid = "";
+  final myController = TextEditingController();
 
+  String genUuid() {
+    var uuid = Uuid();
+    return uuid.v4();
+  }
 
+  void connects_to_socket() async {
+    if (uid.isEmpty) {
+      setState(() {
+        uid = genUuid();
+      });
+    }
+    try {
+      socket = await Socket.connect('143.198.234.58', 1234);
+    } on SocketException catch (e) {
+      print("Could not connect to the server:");
+      print(e);
+    }
+  }
 
+  Future getFile() async {
+    Directory tempDir = await getTemporaryDirectory();
+    tempPath = tempDir.path;
+    FilePickerResult result = await FilePicker.platform
+        .pickFiles(allowMultiple: true, type: FileType.any);
 
+    if (result != null) {
+      files = result.paths.map((path) => File(path)).toList();
+      setState(() {});
+    } else {
+      // User canceled the picker
+    }
+  }
 
+  Future getImage() async {
+    Directory tempDir = await getTemporaryDirectory();
+    tempPath = tempDir.path;
+    FilePickerResult result = await FilePicker.platform
+        .pickFiles(allowMultiple: true, type: FileType.image);
+    if (result != null) {
+      files = result.paths.map((path) => File(path)).toList();
+      setState(() {});
+    } else {
+      // User canceled the picker
+    }
+  }
 
   // void state() {
   //   setState(() {
@@ -133,8 +184,70 @@ class _LoadingPageState extends State<LoadingPage> {
   //   });
   // }
 
+  // change integer to binary
+  Uint8List int32BigEndianBytes(int value) =>
+      Uint8List(4)..buffer.asByteData().setInt32(0, value, Endian.big);
 
+  Future send_heart_beat() async {
+    connects_to_socket();
+    var bytes = utf8.encode('HRB');
+    var size = int32BigEndianBytes(bytes.length);
+    print(size + bytes);
+    socket.add(size + bytes);
+  }
 
+  Future send_string(String str) async {
+    /*
+     Function to receive String str
+     :para str: String variable
+     :return: Socket.add(size + bytes)
+    */
+    // switch string to bytes
+    var bytes = utf8.encode(str);
+    // switch len(var bytes) to binary and store to size
+    var size = int32BigEndianBytes(bytes.length);
+    socket.add(size + bytes);
+  }
+
+  Future send_file() async {
+    /*
+    :return: Received data in bytes. None if not all bytes were received.
+     */
+    connects_to_socket();
+    print(socket);
+    print('connected');
+    //listen to the received data event stream
+    socket.listen((List<int> event) {
+      print(utf8.decode(event));
+    });
+
+    // send picture
+    // convert 3 to bytes take string trf convert to bytes and append in addhere
+    //   find len(TRF) convert to byte
+    for (var i = 0; i < files.length; i++) {
+      send_string('TRF');
+      String fileName = files[i].toString();
+      send_string(fileName.substring(
+          fileName.lastIndexOf('/') + 1, fileName.length - 1));
+      var image = files[i].readAsBytesSync();
+      var size = image.length;
+      socket.add(int32BigEndianBytes(size) + image);
+      //    size of image(BINARY) and image(BINARY)
+      // wait 5 seconds
+      await Future.delayed(Duration(seconds: 5));
+    }
+  }
+
+  // void _incrementCounter() {
+  //   setState(() {
+  //     // This call to setState tells the Flutter framework that something has
+  //     // changed in this State, which causes it to rerun the build method below
+  //     // so that the display can reflect the updated values. If we changed
+  //     // _counter without calling setState(), then the build method would not be
+  //     // called again, and so nothing would appear to happen.
+  //     _counter++;
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -144,7 +257,7 @@ class _LoadingPageState extends State<LoadingPage> {
     } else {
       itemCount = files.length;
     }
-
+    connects_to_socket();
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -157,82 +270,133 @@ class _LoadingPageState extends State<LoadingPage> {
       // the App.build method, and use it to set our appbar title.
       // title: Text(widget.title),
       // ),
-      body: Column(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        children: <Widget>[
-          itemCount > 0
-              ? ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: itemCount,
-                  itemBuilder: (BuildContext context, int index) {
-                    return ListTile(
-                        title: Text(files[index].toString().substring(
-                            files[index].toString().lastIndexOf('/') + 1,
-                            files[index].toString().length - 1)));
+
+      body: Container(
+        decoration: BoxDecoration(
+          color: Colors.black,
+        ),
+        child: Column(
+          // Center is a layout widget. It takes a single child and positions it
+          // in the middle of the parent.
+          children: <Widget>[
+            itemCount > 0
+                ? Padding(
+                    padding: EdgeInsets.fromLTRB(0, 30, 200, 5),
+                    child: Text(
+                      'connect_ME',
+                      style: TextStyle(fontSize: 30),
+                    ))
+                : Spacer(),
+            Container(
+              height: 300,
+              width: 400,
+              child: itemCount > 0
+                  ? ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: itemCount,
+                      itemBuilder: (BuildContext context, int index) {
+                        return ListTile(
+                            title: Text(files[index].toString().substring(
+                                files[index].toString().lastIndexOf('/') + 1,
+                                files[index].toString().length - 1)));
+                      },
+                    )
+                  : Center(
+                      child: Text(
+                      'connect_ME',
+                      style: TextStyle(fontSize: 45),
+                    )),
+            ),
+            Center(
+                child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                InkWell(
+                  child: Text(
+                    "Your Unique ID (Tap to copy)",
+                    style: TextStyle(fontSize: 17),
+                  ),
+                  onTap: () {
+                    // Copy uuid to clipboard
+                    Clipboard.setData(new ClipboardData(text: uid));
                   },
-                )
-              : Center(child: const Text('No items')),
-          Spacer(),
-          Center(
-              child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              Text(
-                my_uuid,
-                style: TextStyle(fontSize: 10),
-              ),
-              SizedBox(
-                width: 150.0,
-                height: 70.0,
-                child: TextField(
-                  controller: myController,
-                  obscureText: false,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(
-                        const Radius.circular(12.0),
+                ),
+                Container(
+                    child: Padding(
+                        padding: EdgeInsets.fromLTRB(0, 5, 0, 5),
+                        child: InkWell(
+                          child: Text(
+                            uid,
+                            style: TextStyle(
+                                fontSize: 17, backgroundColor: Colors.white12),
+                          ),
+                          onTap: () {
+                            // Copy uuid to clipboard
+                            Clipboard.setData(new ClipboardData(text: uid));
+                          },
+                        ))),
+                Padding(
+                  padding: EdgeInsets.all(9),
+                  child: SizedBox(
+                    width: 300.0,
+                    height: 80.0,
+                    child: TextField(
+                      controller: myController,
+                      obscureText: false,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(
+                            const Radius.circular(12.0),
+                          ),
+                        ),
+                        labelText: "Receiver Unique ID",
+                        labelStyle:
+                            TextStyle(color: Colors.white.withOpacity(0.8)),
                       ),
                     ),
-                    labelText: 'Type Host Field',
-                    labelStyle: TextStyle(color: Colors.white.withOpacity(0.8)),
                   ),
-                ),
-              )
-            ],
-          )),
-          Spacer(),
-          Center(
+                )
+              ],
+            )),
+            Center(
+                child: Padding(
+              padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
               child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              // Spacer(),
-              ElevatedButton(
-                child: Text("Select Files"),
-                onPressed: getFile,
-                style: ElevatedButton.styleFrom(
-                    primary: Colors.purple,
-                    textStyle: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  // Spacer(),
+                  ElevatedButton(
+                    child: Text("Select Files"),
+                    onPressed: getFile,
+                    style: ElevatedButton.styleFrom(
+                        primary: Colors.white12,
+                        textStyle: TextStyle(
+                            fontSize: 25, fontWeight: FontWeight.bold)),
+                  ),
+                  ElevatedButton(
+                    child: Text("Select Images"),
+                    onPressed: getImage,
+                    style: ElevatedButton.styleFrom(
+                        primary: Colors.white12,
+                        textStyle: TextStyle(
+                            fontSize: 25, fontWeight: FontWeight.bold)),
+                  ),
+                ],
               ),
-              ElevatedButton(
-                child: Text("Select Images"),
-                onPressed: getImage,
-                style: ElevatedButton.styleFrom(
-                    primary: Colors.purple,
-                    textStyle: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          )),
-          ElevatedButton(
-            child: Text("Send File"),
-            onPressed: send_file,
-            style: ElevatedButton.styleFrom(
-                primary: Colors.purple,
-                textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
-          ),
-          Spacer(),
-        ],
+            )),
+            ElevatedButton(
+              child: Text("Send File"),
+              onPressed: send_file,
+              style: ElevatedButton.styleFrom(
+                  primary: Colors.purple,
+                  textStyle:
+                      TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+            ),
+            Spacer(),
+          ],
+        ),
       ),
+      resizeToAvoidBottomInset: false,
     );
   }
 }
