@@ -19,6 +19,7 @@ Github repo: https://github.com/jaeha-choi/Hackathon-2021
 - `PyQt==5.15.4`: Used for client GUI
 - `pyperclip==1.8.2`: Used for clipboard
 - `qdarkstyle==3.0.2`: Used for dark mode on desktop client
+- `xrange`: Used for cycling through list widget
 
 ## **GUI Requirements**
 
@@ -35,7 +36,7 @@ A. Optional: Support dark mode + button to trigger it
 - B. Optional: Drag and drop support
 - C. Optional: Key binding (aka shortcut) support
 
-<img width="847" alt="image" src="https://user-images.githubusercontent.com/62778661/114319405-48c4ef00-9ac6-11eb-88c9-0f2609928a5c.png">
+<img width="200" alt="image" src="https://user-images.githubusercontent.com/62778661/114319405-48c4ef00-9ac6-11eb-88c9-0f2609928a5c.png">
 
 
 ### Mobile
