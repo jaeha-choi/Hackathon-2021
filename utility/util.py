@@ -89,7 +89,7 @@ def passthrough(send_conn: socket.socket, recv_conn: socket.socket) -> bool:
             packet = send_conn.recv(packet_size - curr)
             if not packet:
                 return False
-            curr += packet
+            curr += len(packet)
             recv_conn.sendall(packet)
     except UnicodeError as err:
         log.error("Encoding error:", err)
