@@ -1,5 +1,8 @@
 # PROJECT COCONUTS
 
+### Track:
+INTERACT
+
 Github repo: https://github.com/jaeha-choi/Hackathon-2021
 
 ### Objectives
