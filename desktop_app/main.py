@@ -1,3 +1,4 @@
+import atexit
 import sys
 import uuid
 
@@ -9,7 +10,8 @@ from pip._vendor.msgpack.fallback import xrange
 
 import desktop_app.client as cl
 
-RELAY_SERVER_IP = "143.198.234.58"
+# RELAY_SERVER_IP = "143.198.234.58"
+RELAY_SERVER_IP = ""
 RELAY_SERVER_PORT = 1234
 
 
@@ -43,7 +45,14 @@ class MyWindow(QMainWindow):
         self.client.connect()
         self.client.send_uuid()
 
-        # END OF CLIENT RECIEVER SETUP
+        # END OF CLIENT RECEIVER SETUP
+
+        # CLOSES CONNECTION WHEN PROGRAM IS EXITED
+
+        self.exit = atexit
+        self.exit.register(self.exitFunctions)
+
+        # END OF EXIT
 
     def initUI(self):
         layout = QVBoxLayout()
@@ -165,6 +174,7 @@ class MyWindow(QMainWindow):
         clipboardContents = pyperclip.paste()
         pyperclip.copy(clipboardContents)
 
+
     def darkLight(self):
 
         if (self._darkLight_flag == True):
@@ -179,13 +189,16 @@ class MyWindow(QMainWindow):
             self.deleteFileButton.setText("Delete File(s)")
             self._darkLight_flag = True
 
+    def exitFunctions(self):
+        self.client.close()
+
 
 def window():
     app = QApplication(sys.argv)
     win = MyWindow()
     win.show()
     sys.exit(app.exec_())
-    client.close()
+
 
 
 window()
