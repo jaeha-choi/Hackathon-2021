@@ -1,3 +1,4 @@
+import atexit
 import sys
 import uuid
 
@@ -9,7 +10,8 @@ from pip._vendor.msgpack.fallback import xrange
 
 import desktop_app.client as cl
 
-RELAY_SERVER_IP = "143.198.234.58"
+# RELAY_SERVER_IP = "143.198.234.58"
+RELAY_SERVER_IP = ""
 RELAY_SERVER_PORT = 1234
 
 
@@ -43,7 +45,14 @@ class MyWindow(QMainWindow):
         self.client.connect()
         self.client.send_uuid()
 
-        # END OF CLIENT RECIEVER SETUP
+        # END OF CLIENT RECEIVER SETUP
+
+        # CLOSES CONNECTION WHEN PROGRAM IS EXITED
+
+        self.exit = atexit
+        self.exit.register(self.exitFunctions)
+
+        # END OF EXIT
 
     def initUI(self):
         layout = QVBoxLayout()
@@ -139,12 +148,13 @@ class MyWindow(QMainWindow):
 
     def sendFiles(self):
         # Saves receiver's unique ID to a variable
+        # Gets Unique ID of Receiver
         self.hostFieldValue = self.hostFieldTextBox.text()
         print(self.hostFieldValue)
 
         # SEND RECEIVER'S UNIQUE ID TO ESTABLISH SECURE CONNECTION
-        # self.client.uuid = self.hostFieldValue
-        # self.client.send_uuid()
+        self.client.uuid = self.hostFieldValue
+        self.client.send_uuid()
 
         # Deals with saving and sending files
         items = []
@@ -160,10 +170,18 @@ class MyWindow(QMainWindow):
         for filePath, fileName in zip(filePaths, fileNames):
             self.client.send_file(filePath, fileName)
 
-
     def shareClipboard(self):
-        clipboardContents = pyperclip.paste()
-        pyperclip.copy(clipboardContents)
+        # Gets Unique ID of Receiver
+        self.hostFieldValue = self.hostFieldTextBox.text()
+
+        # Grabs Contents of the Clipboard
+        self.clipboardContents = pyperclip.paste()
+
+        print(str(self.clipboardContents))
+
+        # Sends contents of clipboard to receiver as a String
+        self.client.send_clip(self.hostFieldValue, str(self.clipboardContents))
+
 
     def darkLight(self):
 
@@ -179,13 +197,16 @@ class MyWindow(QMainWindow):
             self.deleteFileButton.setText("Delete File(s)")
             self._darkLight_flag = True
 
+    def exitFunctions(self):
+        self.client.close()
+
 
 def window():
     app = QApplication(sys.argv)
     win = MyWindow()
     win.show()
     sys.exit(app.exec_())
-    client.close()
+
 
 
 window()
