@@ -17,16 +17,19 @@ log.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',
                 level=log.DEBUG, datefmt='%m/%d/%Y %I:%M:%S %p')
 
 
-def data_relay(send_conn, recv_conn):
+def data_relay(send_conn, recv_conn) -> ExitCode:
     if util.passthrough(send_conn, recv_conn):
         log.info("File sent.")
-        util.send_str(send_conn, ExitCode.SUCCESS)
-        util.send_str(recv_conn, ExitCode.SUCCESS)
+        util.send_str(send_conn, ExitCode.CONTINUE)
+        util.send_str(recv_conn, ExitCode.CONTINUE)
+        log.info("DATA_RELAY command done")
+        return ExitCode.CONTINUE
     else:
         log.error("File not sent.")
         util.send_str(send_conn, ExitCode.FAIL_GENERAL)
         util.send_str(recv_conn, ExitCode.FAIL_GENERAL)
-    log.info("DATA_RELAY command done")
+        log.info("DATA_RELAY command done")
+        return ExitCode.FAIL_GENERAL
 
 
 class Server:
@@ -145,17 +148,27 @@ class Server:
                         # Get dest uid
                         uid, _ = util.recv_str(conn)
                         if uid in self.clients:
-                            util.send_str(conn, ExitCode.CONTINUE)
                             # UUID found in dict
-                            save_n, _ = util.recv_str(conn)
-
+                            util.send_str(conn, ExitCode.CONTINUE)
+                            file_count, _ = util.recv_str(conn)
+                            # Find receiver socket connection
                             recv_conn = self.clients[uid][-1]  # (pub_ip, port, priv_ip, priv_port, conn)
-                            util.send_str(recv_conn, save_n)
-                            data_relay(conn, recv_conn)
-
+                            # Send total file count to receiver
+                            util.send_str(recv_conn, file_count)
+                            for i in range(int(file_count)):
+                                # Get name from sender, forward them to receiver
+                                save_n, _ = util.recv_str(conn)
+                                util.send_str(recv_conn, save_n)
+                                # Forward a file
+                                code = data_relay(conn, recv_conn)
+                                if code != ExitCode.CONTINUE:
+                                    log.error("Error while relaying files")
+                                    # TODO: Do something better here
+                                    break
                         else:
-                            util.send_str(conn, ExitCode.NO_UUID_MATCH)
                             # UUID not found in dict
+                            util.send_str(conn, ExitCode.NO_UUID_MATCH)
+
                     err_cnt = 0
 
             except ConnectionResetError:

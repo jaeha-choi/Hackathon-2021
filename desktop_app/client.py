@@ -2,6 +2,7 @@ import asyncio
 import logging as log
 import socket
 import uuid
+from typing import List
 
 from utility import util
 from utility.util import Command
@@ -28,7 +29,6 @@ class Client:
     def _send_command(self, command: Command) -> bool:
         return util.send_str(self.server_conn, str(command))
 
-        # ge
     def _get_result(self) -> ExitCode:
         return ExitCode(int(util.recv_str(self.server_conn)[0]))
 
@@ -76,18 +76,27 @@ class Client:
     def send_clip(self, recv_uid: str, content: str) -> ExitCode:
         pass
 
-    def send_file_relay(self, recv_uid: str, file_n: str, server_save_n: str) -> ExitCode:
+    def send_file_relay(self, recv_uid: str, file_names: List[str], server_save_names: List[str]) -> ExitCode:
+        if len(file_names) != len(server_save_names):
+            return ExitCode.FAIL_GENERAL
+
         self._send_command(Command.DATA_RELAY)
         # Send dest uid
         util.send_str(self.server_conn, recv_uid)
         code = self._get_result()
         if code == ExitCode.CONTINUE:
             print("Receiver UUID found.")
-            # Send file name to use for saving on server-side
-            util.send_str(self.server_conn, server_save_n)
-            # Send file
-            util.send_bin(self.server_conn, file_n)
-            code = self._get_result()
+            # Send file count as string
+            util.send_str(self.server_conn, len(server_save_names))
+
+            for file_path, file_name in zip(file_names, server_save_names):
+                # Send file name to use for saving on server-side
+                util.send_str(self.server_conn, file_name)
+                # Send file
+                util.send_bin(self.server_conn, file_path)
+                code = self._get_result()
+                if code != ExitCode.CONTINUE:
+                    return code
         elif code == ExitCode.NO_UUID_MATCH:
             print("Receiver UUID NOT found.")
 
@@ -102,9 +111,17 @@ class Client:
         return self._get_result()
 
     def recv_file_relay(self) -> ExitCode:
-        name, _ = util.recv_str(self.server_conn)
-        util.recv_bin(self.server_conn, name)
-        return self._get_result()
+        # Receive file count
+        file_count, _ = util.recv_str(self.server_conn)
+        for i in range(int(file_count)):
+            # Get file name
+            name, _ = util.recv_str(self.server_conn)
+            # Get file
+            util.recv_bin(self.server_conn, name)
+            code = self._get_result()
+            if code != ExitCode.CONTINUE:
+                return code
+        return ExitCode.SUCCESS
 
     def recv_file(self):
         pass
