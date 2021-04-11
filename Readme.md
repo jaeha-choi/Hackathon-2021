@@ -9,6 +9,9 @@ Github repo: https://github.com/jaeha-choi/Hackathon-2021
 - Optional: Support all functionalities in WAN
 - Optional: Tcp hole punching or uses central server if user desires (for enhancing privacy)
 
+## Desired User Experience:
+Desired user experience is to have a cross platform application to send files and clipboard data to the user's various devices.
+
 ### Supported Operating Systems
 - Desktop: Windows/macOS/Linux 
 - Mobile: Android/iOS
