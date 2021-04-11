@@ -1,4 +1,5 @@
 import asyncio
+import logging as log
 import socket
 import uuid
 
@@ -37,10 +38,13 @@ class Client:
 
     def connect(self) -> ExitCode:
         # self.socket.listen()
-        self.server_conn.connect((self.server_ip, self.server_port))
-        print('Connected to', self.server_ip, 'on', str(self.server_port))
+        try:
+            self.server_conn.connect((self.server_ip, self.server_port))
+        except ConnectionRefusedError:
+            log.error("Connection refused. Is the server running?")
+            quit(0)
+        log.info('Connected to', self.server_ip, 'on', str(self.server_port))
         return self.send_heartbeat()
-        # return con, adr
 
     def close(self):
         self._send_command(Command.EXIT)
