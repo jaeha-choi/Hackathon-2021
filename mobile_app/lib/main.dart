@@ -4,6 +4,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
+import "dart:typed_data";
 
 void main() {
   runApp(MyApp());
@@ -117,12 +119,16 @@ class LoadingPage extends StatefulWidget {
 
 class _LoadingPageState extends State<LoadingPage> {
   // pick file
+  Socket socket;
   String tempPath;
   List<File> files;
   final myController = TextEditingController();
 
+  void connects_to_socket() async {
+    socket = await Socket.connect('143.198.234.58', 1234);
+  }
+
   Future getFile() async {
-    print(myController.text);
     Directory tempDir = await getTemporaryDirectory();
     tempPath = tempDir.path;
     FilePickerResult result =
@@ -130,11 +136,10 @@ class _LoadingPageState extends State<LoadingPage> {
 
     if (result != null) {
       files = result.paths.map((path) => File(path)).toList();
+      setState(() {});
     } else {
       // User canceled the picker
     }
-    // print('this is temp path' + tempPath);
-    //  print(await files[0].readAsBytesSync());
   }
 
   Future getImage() async {
@@ -160,26 +165,61 @@ class _LoadingPageState extends State<LoadingPage> {
   //   });
   // }
 
-  Future send() async {
-    Socket socket = await Socket.connect('143.198.234.58', 1234);
-    print('connected');
+  // send string TRF
+  // Send filename as a string (robin.jpg)
+  // send image file
+  Uint8List int32BigEndianBytes(int value) =>
+      Uint8List(4)..buffer.asByteData().setInt32(0, value, Endian.big);
 
-    // listen to the received data event stream
-    socket.listen((List<int> event) {
-      print(utf8.decode(event));
-    });
-
-    // send picture
-    for (var i = 0; i < files.length; i++) {
-      socket.add(await files[i].readAsBytesSync());
-      // wait 5 seconds
-      print(files[i]);
-      await Future.delayed(Duration(seconds: 5));
-    }
-
-    // .. and close the socket
-    socket.close();
+  Future send_heart_beat() async {
+    connects_to_socket();
+    var bytes = utf8.encode('HRB');
+    var size = int32BigEndianBytes(bytes.length);
+    print(size + bytes);
+    print(socket);
+    socket.add(size + bytes); // "TRF"-> byte
   }
+
+  Future send_string(String str) async {
+    // switch string to bytes
+    var bytes = utf8.encode(str);
+    // switch len(var bytes) to binary and store to size
+    var size = int32BigEndianBytes(bytes.length);
+    socket.add(size + bytes);
+  }
+
+  Future send_file() async {
+    /*
+    :return: Received data in bytes. None if not all bytes were received.
+     */
+    connects_to_socket();
+    print(socket);
+      print('connected');
+      //listen to the received data event stream
+      socket.listen((List<int> event) {
+        print(utf8.decode(event));
+      });
+
+      // send picture
+      // convert 3 to bytes take string trf convert to bytes and append in addhere
+      //   find len(TRF) convert to byte
+      for (var i = 0; i < files.length; i++) {
+        send_string('TRF');
+        String file_n = files[i].toString();
+        send_string(file_n.substring(file_n.lastIndexOf('/') + 1, file_n.length - 1));
+        var image = files[i].readAsBytesSync();
+        var size = image.length;
+        socket.add(int32BigEndianBytes(size) + image);
+        // data = await send_string(files[i].radAsBytesSync());
+        // print(data.length);
+        // socket.add(data);
+        // wait 5 seconds
+        await Future.delayed(Duration(seconds: 5));
+      }
+      // .. and close the socket
+    // socket.close();
+  }
+
 
   // void _incrementCounter() {
   //   setState(() {
@@ -195,13 +235,12 @@ class _LoadingPageState extends State<LoadingPage> {
   @override
   Widget build(BuildContext context) {
     int itemCount;
-    String file_name;
-
     if (files == null) {
       itemCount = 0;
     } else {
       itemCount = files.length;
     }
+
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -224,38 +263,22 @@ class _LoadingPageState extends State<LoadingPage> {
                   itemCount: itemCount,
                   itemBuilder: (BuildContext context, int index) {
                     return ListTile(
-                      title: Text(files[index].toString().substring(files[index].toString().lastIndexOf('/')+1)),
+                      title: Text(files[index]
+                          .toString()
+                          .substring(files[index].toString().lastIndexOf('/') + 1)),
                     );
                   },
                 )
               : Center(child: const Text('No items')),
-          //
-          //   ListView.builder(
-          //   padding: const EdgeInsets.all(8),
-          //     itemCount: entries.length,
-          //     shrinkWrap: true,
-          //     itemBuilder: (BuildContext context, int index) {
-          //       return Container(
-          //         height: 50,
-          //         color: Colors.amber[colorCodes[index]],
-          //         child: Center(child: Text('Entry ${entries[index]}')),
-          //
-          //       );
-          //     }
-          // ),
           Spacer(),
           Center(
               child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
               Text(
-                'Host Label',
-                style: TextStyle(fontSize: 20),
+                getUuid(),
+                style: TextStyle(fontSize: 10),
               ),
-              // Text(
-              //   '',
-              //   style: TextStyle(fontSize: 18),
-              // ),
               SizedBox(
                 width: 150.0,
                 height: 70.0,
@@ -282,9 +305,7 @@ class _LoadingPageState extends State<LoadingPage> {
               )
             ],
           )),
-
           Spacer(),
-
           Center(
               child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -308,16 +329,19 @@ class _LoadingPageState extends State<LoadingPage> {
           )),
           ElevatedButton(
             child: Text("Send File"),
-            onPressed: send,
+            onPressed: send_file,
             style: ElevatedButton.styleFrom(
                 primary: Colors.purple,
                 textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
           ),
           Spacer(),
-
-          // TODO need to change files index (show error msg)
         ],
       ),
     );
+  }
+
+  String getUuid() {
+    var uuid = Uuid();
+    return uuid.v4();
   }
 }
