@@ -42,7 +42,7 @@ class MyWindow(QMainWindow):
 
         # SETUP CONNECTION
 
-        self.client = cl.Client(RELAY_SERVER_IP, RELAY_SERVER_PORT)
+        self.client = cl.Client(RELAY_SERVER_IP, RELAY_SERVER_PORT, self.yourUniqueID)
         self.client.connect()
         self.client.send_uuid()
 
