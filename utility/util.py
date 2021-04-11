@@ -86,13 +86,14 @@ def passthrough(send_conn: socket.socket, recv_conn: socket.socket) -> bool:
         packet_size = _get_pkt_size(send_conn)
         if packet_size == -1:
             return False
+        recv_conn.sendall(struct.pack('!L', packet_size))
         while curr < packet_size:
             packet = send_conn.recv(packet_size - curr)
             if not packet:
                 return False
             curr += len(packet)
             # data += packet#
-            recv_conn.send(packet)
+            recv_conn.sendall(packet)
     except UnicodeError as err:
         log.error("Encoding error:", err)
         return False
