@@ -95,12 +95,12 @@ def passthrough(send_conn: socket.socket, recv_conn: socket.socket) -> bool:
     total_received = 0
     try:
         # Get first four bytes to get packet size
-        packet_size = _get_pkt_size(send_conn) # getting size
+        packet_size = _get_pkt_size(send_conn)
         if packet_size == -1:
             return False
         # Server sends length of bytes to expect to the receiver
-        recv_conn.sendall(struct.pack('!L', packet_size)) # send size to reciever
-        while total_received < packet_size: # send dire
+        recv_conn.sendall(struct.pack('!L', packet_size))
+        while total_received < packet_size:
             packet = send_conn.recv(packet_size - total_received)
             if not packet:
                 return False
@@ -172,7 +172,12 @@ def recv_str(conn: socket.socket, encoding: str = "utf-8") -> (str, bool):
 
 def send_bin(conn: socket.socket, file_n: str, buff_size: int = 4096) -> bool:
     """
-
+    Send file as binary format. Could return error if folder
+    permission is incorrect, path does not exist, etc.
+    :param conn: Connection socket
+    :param file_n: File name to save as
+    :param buff_size: Size of a buffer
+    :return: True if successfully sent, False otherwise.
     """
     try:
         with open(file_n, "rb") as file:
