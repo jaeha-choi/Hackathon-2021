@@ -117,39 +117,11 @@ class LoadingPage extends StatefulWidget {
 
 class _LoadingPageState extends State<LoadingPage> {
    // socket;
-  String tempPath;
-  List<File> files;
-  final myController = TextEditingController();
 
 
 
 
-  Future getFile() async {
-    Directory tempDir = await getTemporaryDirectory();
-    tempPath = tempDir.path;
-    FilePickerResult result =
-        await FilePicker.platform.pickFiles(allowMultiple: true, type: FileType.any);
 
-    if (result != null) {
-      files = result.paths.map((path) => File(path)).toList();
-      setState(() {});
-    } else {
-      // User canceled the picker
-    }
-  }
-
-  Future getImage() async {
-    Directory tempDir = await getTemporaryDirectory();
-    tempPath = tempDir.path;
-    FilePickerResult result =
-        await FilePicker.platform.pickFiles(allowMultiple: true, type: FileType.image);
-    if (result != null) {
-      files = result.paths.map((path) => File(path)).toList();
-      setState(() {});
-    } else {
-      // User canceled the picker
-    }
-  }
 
   // void state() {
   //   setState(() {
@@ -162,47 +134,6 @@ class _LoadingPageState extends State<LoadingPage> {
   // }
 
 
-
-  Future send_string(String str) async {
-    /*
-     Function to receive String str
-     :para str: String variable
-     :return: Socket.add(size + bytes)
-    */
-    // switch string to bytes
-    var bytes = utf8.encode(str);
-    // switch len(var bytes) to binary and store to size
-    var size = int32BigEndianBytes(bytes.length);
-    socket.add(size + bytes);
-  }
-
-  Future send_file() async {
-    /*
-    :return: Received data in bytes. None if not all bytes were received.
-     */
-    connects_to_socket();
-    print(socket);
-    print('connected');
-    //listen to the received data event stream
-    socket.listen((List<int> event) {
-      print(utf8.decode(event));
-    });
-
-    // send picture
-    // convert 3 to bytes take string trf convert to bytes and append in addhere
-    //   find len(TRF) convert to byte
-    for (var i = 0; i < files.length; i++) {
-      send_string('TRF');
-      String fileName = files[i].toString();
-      send_string(fileName.substring(fileName.lastIndexOf('/') + 1, fileName.length - 1));
-      var image = files[i].readAsBytesSync();
-      var size = image.length;
-      socket.add(int32BigEndianBytes(size) + image);
-      //    size of image(BINARY) and image(BINARY)
-      // wait 5 seconds
-      await Future.delayed(Duration(seconds: 5));
-    }
-  }
 
 
   @override

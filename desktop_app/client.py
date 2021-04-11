@@ -32,6 +32,7 @@ class Client:
     def _send_command(self, command: Command) -> bool:
         return util.send_str(self.server_conn, str(command))
 
+        # ge
     def _get_result(self) -> ExitCode:
         return ExitCode(int(util.recv_str(self.server_conn)[0]))
 

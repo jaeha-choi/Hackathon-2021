@@ -95,12 +95,12 @@ def passthrough(send_conn: socket.socket, recv_conn: socket.socket) -> bool:
     total_received = 0
     try:
         # Get first four bytes to get packet size
-        packet_size = _get_pkt_size(send_conn)
+        packet_size = _get_pkt_size(send_conn) # getting size
         if packet_size == -1:
             return False
         # Server sends length of bytes to expect to the receiver
-        recv_conn.sendall(struct.pack('!L', packet_size))
-        while total_received < packet_size:
+        recv_conn.sendall(struct.pack('!L', packet_size)) # send size to reciever
+        while total_received < packet_size: # send dire
             packet = send_conn.recv(packet_size - total_received)
             if not packet:
                 return False
