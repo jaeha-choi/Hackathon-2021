@@ -1,11 +1,20 @@
+import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
+
+import 'main.dart';
+
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-import 'main.dart';
 import 'dart:io';
 
-
 Socket socket;
+
+void connects_to_socket() async {
+  socket = await Socket.connect('143.198.234.58', 1234);
+}
+
 Future<String> getFilePath() async {
   /*    We call getApplicationDocumentsDirectory. This comes from the path_provider package that we installed earlier. This will get whatever the common documents directory is for the platform that we are using.
     Get the path to the documents directory as a String
@@ -55,6 +64,16 @@ Uint64List _get_pkt_size(RawSocket socket) {
   }
 
 }
+// change integer to binary
+Uint8List int32BigEndianBytes(int value) =>
+    Uint8List(4)..buffer.asByteData().setInt32(0, value, Endian.big);
+
+Future send_heart_beat() async {
+  var bytes = utf8.encode('HRB');
+  var size = int32BigEndianBytes(bytes.length);
+  print(size + bytes);
+  socket.add(size + bytes);
+}
 
 Future<bool> recv_bin(RawSocket socket, file_name)async {
   /*
@@ -76,4 +95,37 @@ Future<bool> recv_bin(RawSocket socket, file_name)async {
 }
 
 
+Future connect(){
+  connects_to_socket();
+  print('Connected to a server ' );
+  return send_heart_beat();
+}
+Future send_string(String str) async {
+  /*
+     Function to receive String str
+     :para str: String variable
+     :return: Socket.add(size + bytes)
+    */
+  // switch string to bytes
+  var bytes = utf8.encode(str);
+  // switch len(var bytes) to binary and store to size
+  var size = int32BigEndianBytes(bytes.length);
+  socket.add(size + bytes);
+}
 
+Future close() {
+  send_string('EXT');
+}
+
+var my_uuid = getUuid();
+
+void send_uuid() {
+  send_string('ADD');
+  // send vvid
+  send_string(my_uuid);
+}
+// getting Uuid ();
+String getUuid() {
+  var uuid = Uuid();
+  return uuid.v4();
+}

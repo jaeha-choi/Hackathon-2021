@@ -94,7 +94,7 @@ class _FrontPageState extends State<FrontPage> {
         ),
         ElevatedButton(
           child: Text(
-            "Send Clipboard",
+            "Select to receive files",
             style: TextStyle(fontSize: 30),
           ),
           onPressed: () {
@@ -116,20 +116,13 @@ class LoadingPage extends StatefulWidget {
 }
 
 class _LoadingPageState extends State<LoadingPage> {
-  Socket socket;
+   // socket;
   String tempPath;
   List<File> files;
   final myController = TextEditingController();
 
-  // getting Uuid ();
-  String getUuid() {
-    var uuid = Uuid();
-    return uuid.v4();
-  }
 
-  void connects_to_socket() async {
-    socket = await Socket.connect('143.198.234.58', 1234);
-  }
+
 
   Future getFile() async {
     Directory tempDir = await getTemporaryDirectory();
@@ -168,17 +161,7 @@ class _LoadingPageState extends State<LoadingPage> {
   //   });
   // }
 
-  // change integer to binary
-  Uint8List int32BigEndianBytes(int value) =>
-      Uint8List(4)..buffer.asByteData().setInt32(0, value, Endian.big);
 
-  Future send_heart_beat() async {
-    connects_to_socket();
-    var bytes = utf8.encode('HRB');
-    var size = int32BigEndianBytes(bytes.length);
-    print(size + bytes);
-    socket.add(size + bytes);
-  }
 
   Future send_string(String str) async {
     /*
@@ -221,16 +204,6 @@ class _LoadingPageState extends State<LoadingPage> {
     }
   }
 
-  // void _incrementCounter() {
-  //   setState(() {
-  //     // This call to setState tells the Flutter framework that something has
-  //     // changed in this State, which causes it to rerun the build method below
-  //     // so that the display can reflect the updated values. If we changed
-  //     // _counter without calling setState(), then the build method would not be
-  //     // called again, and so nothing would appear to happen.
-  //     _counter++;
-  //   });
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -275,7 +248,7 @@ class _LoadingPageState extends State<LoadingPage> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
               Text(
-                getUuid(),
+                my_uuid,
                 style: TextStyle(fontSize: 10),
               ),
               SizedBox(
