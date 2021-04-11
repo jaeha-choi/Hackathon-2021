@@ -26,6 +26,7 @@ List recvStr(RawSocket conn) {
   String string = "";
   try {
     int packetSize = getPacketSize(conn);
+    print(packetSize);
     if (packetSize == -1) {
       return [string, false];
     } else {
@@ -45,7 +46,9 @@ bool sendStr(RawSocket conn, String msg) {
     var bytes = utf8.encode(msg);
     // Get size of total bytes to send
     var size = uint32ToByte(bytes.length);
-    conn.write(size + bytes);
+    print(msg);
+    conn.write(size);
+    conn.write(bytes);
   } catch (error) {
     return false;
   }
@@ -87,7 +90,10 @@ Future<bool> sendFileRelay(RawSocket conn, String recvUid, List<File> files,
   sendStr(conn, "DRL");
   sendStr(conn, recvUid);
 
-  int code = int.parse(recvStr(conn)[0]);
+  var res = recvStr(conn);
+  print(res);
+  int code = int.parse(res[0]);
+
   // If received code is CONTINUE
   if (code == 2) {
     print("Receiver UUID found.");
