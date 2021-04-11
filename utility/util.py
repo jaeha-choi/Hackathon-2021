@@ -71,6 +71,11 @@ def _recv_n_byte(conn: socket.socket, packet_size: int):
 
 
 def _get_pkt_size(conn: socket.socket) -> int:
+    """
+    Get the packet size by unpacking first four bytes of the data
+    :param conn: Connection socket
+    :return: Size of a single file, string. -1 if no packet received.
+    """
     # Receive first four bytes
     b_pkt_len = _recv_n_byte(conn, 4)
     if b_pkt_len is None:
@@ -80,25 +85,32 @@ def _get_pkt_size(conn: socket.socket) -> int:
 
 
 def passthrough(send_conn: socket.socket, recv_conn: socket.socket) -> bool:
-    curr = 0
-    # data = b''
+    """
+    Get file from sender and pass it to the receiver.
+    Both connection must be alive
+    :param send_conn: Sender socket
+    :param recv_conn: Receiver socket
+    :return: True if successfully passed a file, False if not.
+    """
+    total_received = 0
     try:
+        # Get first four bytes to get packet size
         packet_size = _get_pkt_size(send_conn)
         if packet_size == -1:
             return False
+        # Server sends length of bytes to expect to the receiver
         recv_conn.sendall(struct.pack('!L', packet_size))
-        while curr < packet_size:
-            packet = send_conn.recv(packet_size - curr)
+        while total_received < packet_size:
+            packet = send_conn.recv(packet_size - total_received)
             if not packet:
                 return False
-            curr += len(packet)
-            # data += packet#
+            total_received += len(packet)
             recv_conn.sendall(packet)
     except UnicodeError as err:
         log.error("Encoding error:", err)
         return False
     except Exception as err:
-        log.error("Unknown error in send_str", err)
+        log.error("Unknown error in passthrough", err)
         return False
 
     return True
@@ -115,6 +127,7 @@ def send_str(conn: socket.socket, msg: Any, encoding: str = "utf-8") -> bool:
     try:
         # This is inefficient as the size can get big very fast
         # b_msg = b'%i]' % len(b_msg) + msg.encode(encoding=encoding)
+
         # Sends size of the file in first four bytes
         b_msg = struct.pack('!L', len(str(msg))) + str(msg).encode(encoding=encoding)
         # print("send_str:\tPacket size:", len(msg))  # Debug

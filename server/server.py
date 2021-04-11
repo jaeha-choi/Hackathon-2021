@@ -5,6 +5,7 @@ import time
 import uuid
 from typing import Any
 
+# TODO: Fix relative import error
 from utility import util
 from utility.util import Command
 from utility.util import ExitCode
@@ -37,7 +38,12 @@ class Server:
         self.clients = {}  # uuid : (pub_ip, port, priv_ip, priv_port, conn)
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((self.ip, self.port))
+        # Next line prevents socket.error caused by TCP wait
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            self.socket.bind((self.ip, self.port))
+        except socket.error as err:
+            log.critical("Could not bind sockets", err)
         self.socket.listen()
         self.socket.settimeout(30)
 
@@ -154,6 +160,7 @@ class Server:
 
             except ConnectionResetError:
                 conn.close()
+                # TODO: Delete user record from clients dict
                 log.warning("Closing connection closed by peer.")
             except KeyboardInterrupt:
                 conn.close()
