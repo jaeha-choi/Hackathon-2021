@@ -128,11 +128,9 @@ class Server:
             except ConnectionResetError:
                 conn.close()
                 log.warning("Closing connection closed by peer.")
-
             except KeyboardInterrupt:
                 conn.close()
                 log.error("Keyboard Interrupt")
-
             except Exception as err1:
                 log.error("Unknown Error at listen", err1)
         if err_cnt > TERMINATE_TH:
@@ -141,11 +139,17 @@ class Server:
             log.warning("Closing connection due to timeout.")
 
     def listen(self):
+        conn = None
         while True:
             try:
                 conn, addr = self.socket.accept()
             except socket.timeout:
                 continue
+            except KeyboardInterrupt:
+                if conn is not None:
+                    conn.close()
+                log.error("Keyboard Interrupt")
+                return
             thread = threading.Thread(target=self._listen, args=(conn, addr))
             thread.start()
 
