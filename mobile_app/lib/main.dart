@@ -77,10 +77,10 @@ class _FrontPageState extends State<FrontPage> {
             child: Container(
       constraints: BoxConstraints.expand(),
       decoration: BoxDecoration(
-          // image: DecorationImage(
-          //   image: AssetImage("images/spacex.jpg"),
-          //   fit: BoxFit.cover,
-          // ),
+          image: DecorationImage(
+            image: AssetImage("images/spacex.jpg"),
+            fit: BoxFit.cover,
+          ),
           ),
       child: Column(
         children: <Widget>[
