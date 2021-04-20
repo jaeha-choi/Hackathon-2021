@@ -10,8 +10,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     conn, addr = s.accept()
     try:
         with conn:
-            by = b''
             while True:
+                by = b''
                 data = conn.recv(BUFFER_SIZE)
                 if not data:
                     break
