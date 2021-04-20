@@ -149,7 +149,7 @@ def send_str(conn: socket.socket, msg: Any, encoding: str = "utf-8") -> bool:
     except Exception as err:
         log.error("Unknown error in send_str: [%s]" % err)
         return False
-    log.debug("Sent string [%s]. Packet size: [%s]." % (msg, len(msg)))
+    log.debug("Sent string [%s]. Packet size: [%s]." % (msg, len(str(msg))))
     return True
 
 
