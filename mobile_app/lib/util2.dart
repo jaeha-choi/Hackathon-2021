@@ -1,6 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
+
+
+
 
 // Byte to unsigned int32
 int byteToUint32(Uint8List value) {
@@ -8,6 +13,10 @@ int byteToUint32(Uint8List value) {
   var byteData = new ByteData.view(buffer);
   return byteData.getUint32(0);
 }
+var toByte = new StreamTransformer<List<int>, Uint8List>.fromHandlers(
+    handleData: (data, sink) {
+      sink.add(new Uint64List.fromList(data).buffer.asUint8List());
+    });
 
 // Unsigned int32 to byte
 Uint8List uint32ToByte(int value) =>
@@ -15,9 +24,17 @@ Uint8List uint32ToByte(int value) =>
 
 int getPacketSize(RawSocket conn) {
   Uint8List data = conn.read(4);
+  print(data);
+  // Stream.conn
+  // print(data);
+  // var data = new StreamController(<List<int>>)();
+  // var data;
+  // conn.transform(new IntConverter(4)).listen((4) => 4.forEach(print));
   if (data == null) {
     return -1;
   }
+  // convert byte to unsigned long
+  // return conn.buffer.asInt64List();
   return byteToUint32(data);
 }
 
@@ -46,7 +63,7 @@ bool sendStr(RawSocket conn, String msg) {
     var bytes = utf8.encode(msg);
     // Get size of total bytes to send
     var size = uint32ToByte(bytes.length);
-    print(msg);
+    // print(msg);
     conn.write(size);
     conn.write(bytes);
   } catch (error) {
@@ -87,10 +104,12 @@ Future<bool> sendFileRelay(RawSocket conn, String recvUid, List<File> files,
   if (files.length != serverSaveNames.length) {
     return false;
   }
+  print(conn);
+
   sendStr(conn, "DRL");
   sendStr(conn, recvUid);
 
-  var res = recvStr(conn);
+  var res = recvStr(conn);  //TODO Fix this res = [, false]
   print(res);
   int code = int.parse(res[0]);
 

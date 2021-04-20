@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
@@ -165,7 +166,17 @@ class _LoadingPageState extends State<LoadingPage> {
       });
     }
     try {
-      socket = await RawSocket.connect('143.198.234.58', 1234);
+      if (socket == null) {
+        // TODO chcek if socket is usable
+        socket = await RawSocket.connect('143.198.234.58', 1234);
+        sendHeartbeat(socket);
+        sendUuid(socket, uid);
+        print('connected');
+      }
+      else{
+        print("Already connected");
+      }
+
     } on SocketException catch (e) {
       print("Could not connect to the server:");
       print(e);
@@ -263,8 +274,8 @@ class _LoadingPageState extends State<LoadingPage> {
     :return: Received data in bytes. None if not all bytes were received.
      */
     connects_to_socket();
-    print(socket);
-    print('connected');
+    // print(socket);
+    // print('connected');
 
     List<String> serverSaveNames = [];
     String localName;
@@ -273,7 +284,23 @@ class _LoadingPageState extends State<LoadingPage> {
       serverSaveNames.add(localName.substring(
           localName.lastIndexOf('/') + 1, localName.length - 1));
     }
+    // sendStrTemp("DRL");
+
     sendFileRelay(socket, myController.text, files, serverSaveNames);
+  }
+  bool sendStrTemp(String msg) {
+    try {
+      // Convert string to byte
+      var bytes = utf8.encode(msg);
+      // Get size of total bytes to send
+      var size = uint32ToByte(bytes.length);
+      print(msg);
+      socket.write(size);
+      socket.write(bytes);
+    } catch (error) {
+      return false;
+    }
+    return true;
   }
 
   // void _incrementCounter() {
