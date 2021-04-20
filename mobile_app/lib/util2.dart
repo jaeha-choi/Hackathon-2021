@@ -13,10 +13,7 @@ int byteToUint32(Uint8List value) {
   var byteData = new ByteData.view(buffer);
   return byteData.getUint32(0);
 }
-var toByte = new StreamTransformer<List<int>, Uint8List>.fromHandlers(
-    handleData: (data, sink) {
-      sink.add(new Uint64List.fromList(data).buffer.asUint8List());
-    });
+
 
 // Unsigned int32 to byte
 Uint8List uint32ToByte(int value) =>

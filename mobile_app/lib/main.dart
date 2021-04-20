@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:file_picker/file_picker.dart';
@@ -9,7 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
-import 'util2.dart';
+// import 'util2.dart';
 
 void main() {
   runApp(MyApp());
@@ -170,7 +171,7 @@ class _LoadingPageState extends State<LoadingPage> {
         // TODO chcek if socket is usable
         socket = await RawSocket.connect('143.198.234.58', 1234);
         sendHeartbeat(socket);
-        sendUuid(socket, uid);
+        sendUuid( uid);
         print('connected');
       }
       else{
@@ -182,14 +183,38 @@ class _LoadingPageState extends State<LoadingPage> {
       print(e);
     }
   }
+  // Byte to unsigned int32
+  int byteToUint32(Uint8List value) {
+    var buffer = value.buffer;
+    var byteData = new ByteData.view(buffer);
+    return byteData.getUint32(0);
+  }
 
+
+// Unsigned int32 to byte
+  Uint8List uint32ToByte(int value) =>
+      Uint8List(4)..buffer.asByteData().setInt32(0, value, Endian.big);
+  void sendHeartbeat(RawSocket conn) {
+    var bytes = utf8.encode('HRB');
+    var size = uint32ToByte(bytes.length);
+    conn.write(size + bytes);
+  }
+
+  void sendUuid( String uid) {
+    sendStr( "ADD");
+    sendStr( uid);
+
+    // send priv_ip, priv_port
+    sendStr( socket.address.toString());
+    sendStr( socket.port.toString());
+  }
   String genUuid() {
     var uuid = Uuid();
     return uuid.v4();
   }
 
   void close() {
-    sendStr(socket, 'EXT');
+    sendStr( 'EXT');
     socket.close();
   }
 
@@ -233,6 +258,100 @@ class _LoadingPageState extends State<LoadingPage> {
   //   }
   //   return true;
   // }
+  bool sendStr( String msg) {
+    try {
+      // Convert string to byte
+      var bytes = utf8.encode(msg);
+      // Get size of total bytes to send
+      var size = uint32ToByte(bytes.length);
+      // print(msg);
+      socket.write(size);
+      socket.write(bytes);
+    } catch (error) {
+      return false;
+    }
+    return true;
+  }
+
+  Future<bool> sendBin(File file) async {
+    try {
+      var sizeInByte = uint32ToByte(await file.length());
+      socket.write(sizeInByte);
+      socket.write(await file.readAsBytes());
+    } catch (error) {
+      print("Unknown error in send_bin" + error);
+      return false;
+    }
+    return true;
+  }
+  int getPacketSize() {
+    Uint8List data = socket.read(4);
+    print(data); // 0, 0 0 1 ; 1 means size
+    if (data == null) {
+      return -1;
+    }
+    // convert byte to unsigned long
+    // return conn.buffer.asInt64List();
+    return byteToUint32(data);
+  }
+
+  // Returns [string, status]
+  List recvStr( ) {
+    String string = "";
+    try {
+      int packetSize = getPacketSize();
+      print(packetSize); // 1
+      if (packetSize == -1) {
+        return [string, false];
+      } else {
+        Uint8List data = socket.read(packetSize);
+        print(data);
+        string = utf8.decode(data);
+      }
+    } catch (error) {
+      print("Unknown error in recv_str");
+      return [string, false];
+    }
+    return [string, true];
+  }
+
+  Future<bool> sendFileRelay( String recvUid, List<File> files,
+      List<String> serverSaveNames) async {
+    if (files.length != serverSaveNames.length) {
+      return false;
+    }
+    print(socket);
+
+    sendStr("DRL");
+    sendStr(recvUid);
+    print(recvUid);
+
+    var res = recvStr();  //TODO Fix this res = [, false]
+    print(res);  //
+    // int code = int.parse(res[0]);
+    int code = 2;
+    // If received code is CONTINUE
+    if (code == 2) {
+      print("Receiver UUID found.");
+      // Send file count
+      sendStr( files.length.toString());
+
+      for (int i = 0; i < files.length; i++) {
+        // Send name to use when saving
+        sendStr( serverSaveNames[i]);
+        // Send file
+        sendBin( files[i]);
+        code = int.parse(recvStr()[0]);
+        if (code != 2) {
+          return false;
+        }
+      }
+    } else if (code == 3) {
+      print("Receiver UUID NOT found.");
+      return false;
+    }
+    return true;
+  }
 
   void getFile() async {
     Directory tempDir = await getTemporaryDirectory();
@@ -278,15 +397,16 @@ class _LoadingPageState extends State<LoadingPage> {
     // print('connected');
 
     List<String> serverSaveNames = [];
+    print(serverSaveNames);
     String localName;
     for (int i = 0; i < files.length; i++) {
       localName = files[i].path;
       serverSaveNames.add(localName.substring(
-          localName.lastIndexOf('/') + 1, localName.length - 1));
+          localName.lastIndexOf('/') + 1, localName.length -1));
     }
     // sendStrTemp("DRL");
 
-    sendFileRelay(socket, myController.text, files, serverSaveNames);
+    sendFileRelay( myController.text, files, serverSaveNames);
   }
   bool sendStrTemp(String msg) {
     try {
