@@ -5,6 +5,9 @@ import struct
 from enum import Enum
 from typing import Any
 
+log.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',
+                level=log.DEBUG, datefmt='%m/%d/%Y %I:%M:%S %p')
+
 
 class Command(Enum):
     def __str__(self):
@@ -27,6 +30,7 @@ class ExitCode(Enum):
     CONTINUE = 2
     NO_UUID_MATCH = 3
 
+
 # def exec_res(function: Callable, *args: tuple[Any, ...]) -> None:
 #     res = function(args[0][0], args[0][1]) if len(args) else function()
 #     print("Function \033[96m%s\033[0m returned code: %s" % (str(function.__name__), res.name))
@@ -42,11 +46,12 @@ def validate(ip_addr: str, port: int):
     try:
         socket.inet_aton(ip_addr)
     except socket.error:
-        log.info("IP address not valid")
+        log.debug("IP address [%s] is not valid." % ip_addr)
         return 1
     if not (1 <= port <= 65535):
-        log.info("Port not valid")
+        log.debug("Port number [%s] is not valid." % port)
         return 2
+    log.debug("IP address [%s] and port number [%s] is valid." % ip_addr, port)
     return 0
 
 
@@ -65,8 +70,9 @@ def _recv_n_byte(conn: socket.socket, packet_size: int):
                 return None
             data += packet
     except Exception as err:
-        log.error("Unknown error in _recv_n_byte", err)
+        log.error("Unknown error in _recv_n_byte [%s]" % err)
         return False
+    log.debug("Received [%s] bytes." % packet_size)
     return data
 
 
@@ -79,12 +85,15 @@ def _get_pkt_size(conn: socket.socket) -> int:
     # Receive first four bytes
     b_pkt_len = _recv_n_byte(conn, 4)
     if b_pkt_len is None:
+        log.debug("Byte packet length: None")
         return -1
     # convert byte to unsigned long
-    return struct.unpack('!L', b_pkt_len)[0]
+    lng = struct.unpack('!L', b_pkt_len)[0]
+    log.debug("Byte packet length: [%s]." % lng)
+    return lng
 
 
-def passthrough(send_conn: socket.socket, recv_conn: socket.socket) -> bool:
+def passthroughs(send_conn: socket.socket, recv_conn: socket.socket) -> bool:
     """
     Get file from sender and pass it to the receiver.
     Both connection must be alive
@@ -107,12 +116,12 @@ def passthrough(send_conn: socket.socket, recv_conn: socket.socket) -> bool:
             total_received += len(packet)
             recv_conn.sendall(packet)
     except UnicodeError as err:
-        log.error("Encoding error:", err)
+        log.error("Encoding error: [%s]" % err)
         return False
     except Exception as err:
-        log.error("Unknown error in passthrough", err)
+        log.error("Unknown error in passthroughs: [%s]" % err)
         return False
-
+    # TODO: add print log
     return True
 
 
@@ -130,18 +139,17 @@ def send_str(conn: socket.socket, msg: Any, encoding: str = "utf-8") -> bool:
 
         # Sends size of the file in first four bytes
         b_msg = struct.pack('!L', len(str(msg))) + str(msg).encode(encoding=encoding)
-        # print("send_str:\tPacket size:", len(msg))  # Debug
         conn.sendall(b_msg)
         # while b_msg:
         #     sent_bytes = conn.send(b_msg)
         #     b_msg = b_msg[sent_bytes:]
     except UnicodeError as err:
-        log.error("Encoding error:", err)
+        log.error("Encoding error: [%s]" % err)
         return False
     except Exception as err:
-        log.error("Unknown error in send_str", err)
+        log.error("Unknown error in send_str: [%s]" % err)
         return False
-
+    log.debug("Sent string [%s]. Packet size: [%s]." % (msg, len(msg)))
     return True
 
 
@@ -157,16 +165,15 @@ def recv_str(conn: socket.socket, encoding: str = "utf-8") -> (str, bool):
         packet_size = _get_pkt_size(conn)
         if packet_size == -1:
             return string, False
-        # log.debug("recv_str:\tPacket size:", packet_size)
         data = _recv_n_byte(conn, packet_size)
         string = data.decode(encoding)
     except UnicodeError as err:
-        log.error("Decoding error:", err)
+        log.error("Decoding error: [%s]" % err)
         return string, False
     except Exception as err:
-        log.error("Unknown error in recv_str", err)
+        log.error("Unknown error in recv_str: [%s]" % err)
         return string, False
-
+    log.debug("Received string [%s]. Packet size: [%s]." % (string, packet_size))
     return string, True
 
 
@@ -182,7 +189,6 @@ def send_bin(conn: socket.socket, file_n: str, buff_size: int = 4096) -> bool:
     try:
         with open(file_n, "rb") as file:
             b_msg = struct.pack('!L', os.path.getsize(file_n))
-            # log.debug("send_bin:\tPacket size:", os.path.getsize(file_n))
             conn.send(b_msg)
             while True:
                 bytes_read = file.read(buff_size)
@@ -190,17 +196,16 @@ def send_bin(conn: socket.socket, file_n: str, buff_size: int = 4096) -> bool:
                     # eof
                     break
                 conn.send(bytes_read)
-
     except ValueError as err:
-        log.error("Encoding error:", err)
+        log.error("Encoding error: [%s]" % err)
         return False
     except OSError as err:
-        log.error("File error:", err)
+        log.error("File error: [%s]" % err)
         return False
     except Exception as err:
-        log.error("Unknown error in send_bin", err)
+        log.error("Unknown error in send_bin: [%s]" % err)
         return False
-
+    log.debug("Sent file [%s]." % file_n)
     return True
 
 
@@ -215,18 +220,17 @@ def recv_bin(conn: socket.socket, file_n: str) -> bool:
         packet_size = _get_pkt_size(conn)
         if packet_size == -1:
             return False
-        # log.debug("recv_bin:\tPacket size:", packet_size)
         with open(file_n, "wb") as file:
             data = _recv_n_byte(conn, packet_size)
             file.write(data)
     except ValueError as err:
-        log.error("Encoding error:", err)
+        log.error("Encoding error: [%s]" % err)
         return False
     except OSError as err:
-        log.error("File error:", err)
+        log.error("File error: [%s]" % err)
         return False
     except Exception as err:
-        log.error("Unknown error in recv_bin", err)
+        log.error("Unknown error in recv_bin: [%s]" % err)
         return False
-
+    log.debug("Received file [%s]. Size: [%s]." % (file_n, packet_size))
     return True

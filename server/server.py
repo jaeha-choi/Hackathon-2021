@@ -18,7 +18,7 @@ log.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',
 
 
 def data_relay(send_conn, recv_conn) -> ExitCode:
-    if util.passthrough(send_conn, recv_conn):
+    if util.passthroughs(send_conn, recv_conn):
         log.info("File sent.")
         util.send_str(send_conn, ExitCode.CONTINUE)
         util.send_str(recv_conn, ExitCode.CONTINUE)
