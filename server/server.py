@@ -46,7 +46,7 @@ class Server:
         try:
             self.socket.bind((self.ip, self.port))
         except socket.error as err:
-            log.critical("Could not bind sockets", err)
+            log.critical("Could not bind sockets [%s]." % err)
         self.socket.listen()
         self.socket.settimeout(30)
 
@@ -88,7 +88,7 @@ class Server:
                         priv_port, _ = util.recv_str(conn)
                         self.add(uid, addr[0], addr[1], priv_addr, int(priv_port), conn)  # ADD: Type check
                         util.send_str(conn, ExitCode.SUCCESS)
-                        log.debug("Clients: %s", self.clients.values())
+                        log.debug("Clients: %s" % self.clients.values())
                         log.info("ADD command done")
 
                     elif command == str(Command.EXIT):
@@ -103,7 +103,7 @@ class Server:
                             del self.clients[uid]
                         finally:
                             mutex.release()
-                        log.debug("Clients: %s", self.clients.values())
+                        log.debug("Clients: %s" % self.clients.values())
                         log.info("EXIT command done")
                         break
 
@@ -179,7 +179,7 @@ class Server:
                 conn.close()
                 log.error("Keyboard Interrupt")
             except Exception as err1:
-                log.error("Unknown Error at listen", err1)
+                log.error("Unknown Error at listen [%s]" % err1)
         if err_cnt > TERMINATE_TH:
             # If error exceeds TERMINATE_TH threshold, close connection.
             conn.close()
