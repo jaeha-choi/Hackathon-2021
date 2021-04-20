@@ -5,7 +5,7 @@ import struct
 from enum import Enum
 from typing import Any
 
-log.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',
+log.basicConfig(format='%(asctime)s - %(levelname)s/util.py: %(message)s',
                 level=log.DEBUG, datefmt='%m/%d/%Y %I:%M:%S %p')
 
 
