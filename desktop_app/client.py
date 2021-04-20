@@ -44,7 +44,7 @@ class Client:
         except ConnectionRefusedError:
             log.error("Connection refused. Is the server running?")
             quit(0)
-        log.info('Connected to', self.server_ip, 'on', str(self.server_port))
+        log.info("Connected to [%s:%s]" % (self.server_ip, str(self.server_port)))
         return self.send_heartbeat()
 
     def close(self):
