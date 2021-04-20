@@ -105,10 +105,13 @@ def passthroughs(send_conn: socket.socket, recv_conn: socket.socket) -> bool:
     try:
         # Get first four bytes to get packet size
         packet_size = _get_pkt_size(send_conn)
+        log.debug("Received packet size from the sender. Packet size: [%s]" % packet_size)
         if packet_size == -1:
+            log.error("Received packet size of 0 from the sender. Terminating...")
             return False
         # Server sends length of bytes to expect to the receiver
         recv_conn.sendall(struct.pack('!L', packet_size))
+        log.debug("Sent packet size to receiver. Packet size: [%s]." % packet_size)
         while total_received < packet_size:
             packet = send_conn.recv(packet_size - total_received)
             if not packet:
@@ -121,7 +124,7 @@ def passthroughs(send_conn: socket.socket, recv_conn: socket.socket) -> bool:
     except Exception as err:
         log.error("Unknown error in passthroughs: [%s]" % err)
         return False
-    # TODO: add print log
+    log.debug("Pass-through complete. Packet size: [%s]." % packet_size)
     return True
 
 
